@@ -1,0 +1,2865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Character Select</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    /* Theme: Default mode */
+    body.default-theme {
+      background: #1b446f;
+      color: #e2e8f0;
+      --primary-bg: #1e293b;
+      --secondary-bg: #334155;
+      --text-color: #e2e8f0;
+      --accent-color: #3b82f6; /* Blue */
+      --hover-accent: #2563eb;
+      --button-bg: #475569;
+      --button-hover: #64748b;
+      --border-color: #475569;
+    }
+    
+    /* Theme: Dark mode */
+    body.dark-theme {
+      background: #2e2828;
+      color: #e2e8f0;
+      --primary-bg: #231f1f;
+      --secondary-bg: #3d3434;
+      --text-color: #e2e8f0;
+      --accent-color: #8b5cf6; /* Purple */
+      --hover-accent: #7c3aed;
+      --button-bg: #4b5563;
+      --button-hover: #6b7280;
+      --border-color: #4b5563;
+    }
+    
+    /* Theme: Light mode */
+    body.light-theme {
+      background: #ffffff;
+      color: #1e293b;
+      --primary-bg: #f8fafc;
+      --secondary-bg: #e2e8f0;
+      --text-color: #1e293b;
+      --accent-color: #f97316; /* Orange */
+      --hover-accent: #ea580c;
+      --button-bg: #cbd5e1;
+      --button-hover: #94a3b8;
+      --border-color: #cbd5e1;
+    }
+    
+    .dragging {
+      opacity: 0.5;
+    }
+    
+    .card {
+      background-color: var(--primary-bg);
+      border-radius: 0.5rem;
+      overflow: hidden;
+      width: 110px;
+      height: 140px;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 2px solid transparent;
+      opacity: 1;
+      transform: translateY(0);
+      cursor: pointer;
+      flex: 0 0 110px;
+    }
+    
+    .card.entering {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 10;
+    }
+    
+    .card.selection-mode {
+      cursor: default;
+    }
+    
+    .card-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 0.5rem;
+    }
+    
+    .favorites-bar {
+      display: flex;
+      gap: 0.5rem;
+      padding: 10px;
+      overflow-x: auto;
+      background-color: var(--primary-bg);
+      min-height: 160px;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid var(--border-color);
+      width: 100%;
+    }
+    
+    .drop-indicator {
+      border: 2px dashed var(--accent-color);
+      min-width: 110px;
+      height: 140px;
+      border-radius: 0.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--accent-color);
+      font-size: 0.85rem;
+      padding: 0 10px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    
+    .drop-indicator:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+    }
+    
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      opacity: 0; 
+      background-color: var(--primary-bg);
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 1000;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      max-width: 90%;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      color: var(--text-color);
+    }
+    
+    .popup.active {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    
+    .settings-menu {
+      background-color: var(--button-bg);
+      padding: 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      transition: all 0.2s ease;
+    }
+    
+    .settings-menu:hover {
+      background-color: var(--button-hover);
+      transform: rotate(15deg);
+    }
+    
+    .settings-popup {
+      display: none;
+      position: fixed;
+      top: 50px;
+      left: 10px;
+      background-color: var(--primary-bg);
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+      min-width: 200px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+      color: var(--text-color);
+    }
+    
+    .settings-popup.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .theme-menu {
+      display: none;
+      position: fixed;
+      background-color: var(--primary-bg);
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      min-width: 150px;
+      z-index: 102;
+    }
+    
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-bottom: 4px;
+      transition: background 0.2s;
+      position: relative;
+      color: var(--text-color);
+    }
+    
+    .menu-item:hover {
+      background-color: var(--secondary-bg);
+    }
+    
+    .menu-item.danger:hover {
+      background-color: #dc2626;
+    }
+    
+    .menu-item.has-submenu::after {
+      content: "▶";
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7em;
+    }
+    
+    .menu-item.active {
+      background-color: var(--accent-color);
+    }
+    
+    .header {
+      background-color: var(--primary-bg);
+      padding: 10px 16px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      width: 100%;
+    }
+    
+    .grid-container {
+      width: 100%;
+      padding: 0 24px 24px 24px;
+      display: flex;
+      justify-content: center;
+      margin: 0 auto;
+    }
+    
+    .character-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      width: 100%;
+      max-width: 1800px;
+      justify-content: center;
+      margin: 0 auto;
+    }
+    
+    /* List view */
+    .character-grid.list-view {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 100%;
+      align-items: stretch;
+    }
+    
+    .character-grid.list-view .card {
+      width: 100%;
+      max-width: 800px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 5px;
+      flex: 1 1 100%;
+      margin: 0 auto;
+    }
+    
+    .character-grid.list-view .card-container {
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: 10px;
+    }
+    
+    .character-grid.list-view .card-container img {
+      width: 50px;
+      height: 50px;
+      margin-top: 0;
+      margin-left: 5px;
+    }
+    
+    .character-grid.list-view .card-container h3 {
+      margin-top: 0;
+      text-align: left;
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0);
+      z-index: 999;
+      display: none;
+      transition: background-color 0.3s ease;
+    }
+    
+    .overlay.active {
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+    
+    .search-container {
+      display: flex;
+      align-items: center;
+      position: relative;
+      flex: 0 0 auto;
+    }
+    
+    .search-container input {
+      background: var(--secondary-bg);
+      border: none;
+      border-radius: 0;
+      color: var(--text-color);
+      padding: 6px 12px;
+      width: 200px;
+      outline: none;
+      transition: all 0.3s ease;
+      margin: 0;
+    }
+    
+    .search-container input:focus {
+      width: 250px;
+      box-shadow: 0 0 0 2px var(--accent-color);
+    }
+    
+    .search-clear-btn {
+      background: var(--button-bg);
+      border: none;
+      border-radius: 0 5px 5px 0;
+      color: var(--text-color);
+      padding: 6px 12px;
+      transition: all 0.2s;
+      margin: 0;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    
+    .search-clear-btn:hover {
+      background: var(--button-hover);
+    }
+    
+    .search-clear-btn:active {
+      transform: translateY(1px);
+    }
+    
+    .title-container {
+      display: flex;
+      align-items: center;
+      min-width: 250px;
+    }
+    
+    .section-header {
+      padding: 12px 16px;
+      background-color: var(--primary-bg);
+      font-weight: bold;
+      font-size: 1.1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      width: 100%;
+      justify-content: space-between;
+      color: var(--text-color);
+    }
+    
+    .section-header span {
+      margin-left: 6px;
+    }
+    
+    .input-field {
+      background: var(--secondary-bg);
+      border: none;
+      border-radius: 5px;
+      color: var(--text-color);
+      padding: 6px 10px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    
+    .input-field:focus {
+      box-shadow: 0 0 0 2px var(--accent-color);
+    }
+    
+    .add-container {
+      display: flex;
+      align-items: center;
+      min-width: 350px;
+      justify-content: flex-end;
+    }
+    
+    .btn {
+      border-radius: 5px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      padding: 6px 12px;
+    }
+    
+    .btn:active {
+      transform: translateY(1px);
+    }
+    
+    .btn-accent {
+      background-color: var(--accent-color);
+      color: white;
+    }
+    
+    .btn-accent:hover {
+      background-color: var(--hover-accent);
+    }
+    
+    .btn-blue {
+      background-color: var(--accent-color);
+      color: white;
+    }
+    
+    .btn-blue:hover {
+      background-color: var(--hover-accent);
+    }
+    
+    .btn-gray {
+      background-color: var(--button-bg);
+      color: var(--text-color);
+    }
+    
+    .btn-gray:hover {
+      background-color: var(--button-hover);
+    }
+    
+    .btn-sm {
+      padding: 3px 8px;
+      font-size: 0.75rem;
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--primary-bg); 
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--button-bg); 
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--button-hover); 
+    }
+    
+    .card.selected {
+      border: 2px solid #4ade80;
+    }
+    
+    .selection-tools {
+      display: none;
+      padding: 8px 16px;
+      background-color: var(--primary-bg);
+      border-top: 1px solid var(--border-color);
+      width: 100%;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      z-index: 90;
+      justify-content: space-between;
+      align-items: center;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      color: var(--text-color);
+    }
+    
+    .selection-tools.active {
+      transform: translateY(0);
+    }
+    
+    .tag {
+      background-color: var(--button-bg);
+      color: var(--text-color);
+      border-radius: 9999px;
+      padding: 2px 8px;
+      margin: 2px;
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    
+    .tag:hover {
+      background-color: var(--button-hover);
+    }
+    
+    .tag button {
+      margin-left: 5px;
+      color: #cbd5e1;
+      font-size: 12px;
+      line-height: 1;
+    }
+    
+    .tag button:hover {
+      color: white;
+    }
+    
+    .tag-container {
+      margin-top: 5px;
+      min-height: 26px;
+      display: flex;
+      flex-wrap: wrap;
+    }
+    
+    .checkbox-container {
+      width: 20px;
+      height: 20px;
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      opacity: 0;
+      background-color: var(--primary-bg);
+      border-radius: 3px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      cursor: pointer;
+      z-index: 5;
+    }
+    
+    .card:hover .checkbox-container {
+      opacity: 0.7;
+    }
+    
+    .card:hover .checkbox-container:hover {
+      opacity: 0.9;
+      background-color: var(--secondary-bg);
+    }
+    
+    .card.selected .checkbox-container {
+      opacity: 1;
+      background-color: #22c55e;
+      border-color: #15803d;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #22c55e;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 5px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
+    
+    .toast.error {
+      background-color: #ef4444;
+    }
+    
+    .toast.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .menu-separator {
+      height: 1px;
+      background-color: var(--border-color);
+      margin: 8px 0;
+    }
+    
+    .menu-title {
+      padding: 8px 12px;
+      font-weight: bold;
+      color: var(--accent-color); 
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .search-results {
+      position: absolute;
+      top: calc(100% + 2px);
+      left: 0;
+      right: 0;
+      min-width: 100%;
+      background-color: var(--primary-bg);
+      border-radius: 5px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+      color: var(--text-color);
+    }
+    
+    .search-count {
+      font-size: 0.8rem;
+      padding: 8px 12px;
+      color: var(--text-color);
+      opacity: 0.8;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .search-tags {
+      padding: 8px 12px;
+    }
+    
+    .search-tag {
+      display: inline-block;
+      background-color: var(--secondary-bg);
+      color: var(--text-color);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin: 2px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    
+    .search-tag:hover {
+      background-color: var(--button-bg);
+    }
+    
+    .theme-preview {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .theme-preview.default-preview {
+      background-color: #1b446f;
+    }
+    
+    .theme-preview.dark-preview {
+      background-color: #2e2828;
+    }
+    
+    .theme-preview.light-preview {
+      background-color: white;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .stats-container {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .regex-toggle {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.75rem;
+      padding-left: 8px;
+      margin: 0;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-color);
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    
+    .regex-toggle:hover {
+      opacity: 1;
+    }
+    
+    .regex-toggle.active {
+      color: var(--accent-color);
+      opacity: 1;
+    }
+    
+    .regex-toggle input[type="checkbox"] {
+      cursor: pointer;
+      margin: 0 4px 0 0;
+    }
+    
+    .search-container > * {
+      margin: 0;
+    }
+    
+    .search-container .search-clear-btn {
+      margin-left: -1px;
+    }
+    
+    .search-container .regex-toggle {
+      margin-left: 8px;
+    }
+    
+    .lazy-load-placeholder {
+      flex: 1 1 100%;
+      min-width: 300px;
+      max-width: 600px;
+      height: 60px;
+      background: var(--secondary-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-color);
+      opacity: 0.7;
+      margin: 20px auto;
+      font-size: 0.875rem;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 0.7;
+      }
+      50% {
+        opacity: 0.4;
+      }
+    }
+    
+    .backup-status {
+      font-size: 0.7rem;
+      opacity: 0.6;
+      margin-top: 5px;
+    }
+    
+    .profile-selector {
+      display: flex;
+      align-items: center;
+      margin-left: 20px;
+    }
+    
+    .profile-dropdown {
+      background: var(--secondary-bg);
+      border: none;
+      border-radius: 5px;
+      color: var(--text-color);
+      padding: 4px 8px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+      min-width: 120px;
+    }
+    
+    .profile-dropdown:hover {
+      background: var(--button-bg);
+    }
+    
+    .profile-dropdown:focus {
+      box-shadow: 0 0 0 2px var(--accent-color);
+    }
+    
+    .profile-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: var(--secondary-bg);
+      border-radius: 5px;
+      margin-bottom: 8px;
+    }
+    
+    .profile-item:hover {
+      background: var(--button-bg);
+    }
+    
+    .profile-item.active {
+      background: var(--accent-color);
+      color: white;
+    }
+    
+    .profile-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .profile-name {
+      font-weight: 500;
+    }
+    
+    .profile-stats {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+    
+    .profile-item.active .profile-name {
+      color: white;
+    }
+    
+    .profile-item.active .profile-stats {
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .title-container h1 {
+      white-space: nowrap;
+    }
+    
+    .hotkey-badge {
+      background: var(--button-bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-family: monospace;
+      margin-left: 8px;
+    }
+    
+    textarea {
+      font-family: inherit;
+    }
+    
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-color);
+    }
+    
+    #import-json {
+      font-family: monospace !important;
+    }
+    
+    textarea::placeholder,
+    input::placeholder {
+      color: var(--text-color);
+      opacity: 0.5;
+    }
+  </style>
+</head>
+
+<body class="default-theme">
+  <div class="overlay" id="overlay"></div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Settings Popup -->
+  <div id="settings-popup" class="settings-popup">
+    <div class="stats-container">
+      <div class="stat-item">
+        <span>📊</span>
+        <span id="total-characters">0 characters</span>
+      </div>
+      <div class="stat-item">
+        <span>⭐</span>
+        <span id="total-favorites">0 favorites</span>
+      </div>
+    </div>
+    
+    <div class="backup-status" id="backup-status"></div>
+    
+    <div class="menu-title">Character Management</div>
+    <div class="menu-item" onclick="clearFavorites()">
+      <span>Clear Favorites</span>
+    </div>
+    <div class="menu-item danger" onclick="deleteAllData()">
+      <span>Delete All Data</span>
+    </div>
+    
+    <div class="menu-separator"></div>
+    
+    <div class="menu-title">Data Management</div>
+    <div class="menu-item" onclick="openProfileManager()">
+      <span>Manage Profiles</span>
+    </div>
+    <div class="menu-item" onclick="exportData()">
+      <span>Export JSON Data</span>
+    </div>
+    <div class="menu-item" onclick="openImportDialog()">
+      <span>Import JSON Data</span>
+    </div>
+    
+    <div class="menu-separator"></div>
+    
+    <div class="menu-title">Display Settings</div>
+    <div class="menu-item" onclick="toggleListView()">
+      <span>Toggle Grid/List View</span>
+    </div>
+    <div class="menu-item has-submenu" id="theme-toggle" onmouseenter="showThemeMenu()" onmouseleave="hideThemeMenuDelayed()">
+      <span>Theme</span>
+    </div>
+  </div>
+  
+  <!-- Theme submenu -->
+  <div class="theme-menu" id="theme-menu" onmouseenter="cancelThemeMenuHide()" onmouseleave="hideThemeMenuDelayed()">
+    <div class="menu-item" onclick="setTheme('default-theme')">
+      <div class="theme-preview default-preview"></div>
+      <span>Default</span>
+    </div>
+    <div class="menu-item" onclick="setTheme('dark-theme')">
+      <div class="theme-preview dark-preview"></div>
+      <span>Dark</span>
+    </div>
+    <div class="menu-item" onclick="setTheme('light-theme')">
+      <div class="theme-preview light-preview"></div>
+      <span>Light</span>
+    </div>
+  </div>
+
+  <!-- Import Dialog -->
+  <div id="import-dialog" class="popup" style="width: 400px;">
+    <h2 class="text-xl font-bold text-center mb-4">Import Character Data</h2>
+    <p class="mb-4" style="opacity: 0.8;">Paste your exported JSON data below:</p>
+    <textarea id="import-json" class="w-full h-32 p-2 rounded mb-4" placeholder='{"characters":[...], "favorites":[...]}' spellcheck="false" style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-family: monospace; font-size: 0.875rem;"></textarea>
+    <div class="flex justify-between">
+      <div class="text-sm" style="opacity: 0.6;">This will overwrite your current data.</div>
+      <div class="flex gap-2">
+        <button onclick="closeImportDialog()" class="btn btn-gray px-4 py-2">Cancel</button>
+        <button onclick="importData()" class="btn btn-accent px-4 py-2">Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Add Popup -->
+  <div id="batch-popup" class="popup" style="width: 400px;">
+    <h2 class="text-xl font-bold text-center mb-4">Batch Add Characters</h2>
+    <p class="text-sm mb-2" style="opacity: 0.8;">Enter character names separated by commas, semicolons, tabs, or new lines:</p>
+    <textarea id="batch-add-input" placeholder="Examples:&#10;Alice, Bob, Charlie&#10;David&#10;Eve&#10;Frank, Grace" class="w-full h-32 p-2 rounded mb-2" style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); resize: vertical; font-family: inherit;" onkeydown="if((event.ctrlKey || event.metaKey) && event.key === 'Enter') { batchAddCharacters(); }" oninput="updateBatchCount()"></textarea>
+    <div class="flex justify-between items-center mb-4">
+      <p class="text-xs" style="opacity: 0.6;">Tip: Paste from spreadsheets or lists. Press Ctrl/Cmd+Enter to add.</p>
+      <p class="text-sm" style="opacity: 0.8;"><span id="batch-count">0</span> names detected</p>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeBatchPopup()" class="btn btn-gray px-4 py-2">Cancel</button>
+      <button onclick="batchAddCharacters()" class="btn btn-accent px-4 py-2">Add Characters</button>
+    </div>
+  </div>
+
+  <!-- Character Detail Popup -->
+  <div id="detail-popup" class="popup" style="width: 500px;">
+    <div class="flex justify-between items-start mb-4">
+      <h2 class="text-xl font-bold" id="detail-name">Character Name</h2>
+      <button onclick="closeDetailPopup()" class="text-opacity-60 hover:text-opacity-100">✕</button>
+    </div>
+    <div class="flex gap-4 mb-4">
+      <div class="w-1/3">
+        <img id="detail-avatar" src="" class="w-full rounded-md object-cover mb-2">
+        <input type="file" accept="image/*" id="detail-avatar-upload" class="text-sm w-full">
+      </div>
+      <div class="w-2/3">
+        <div class="mb-3">
+          <label class="block text-sm font-bold mb-1">Character Name</label>
+          <input id="detail-name-input" type="text" class="w-full p-2 rounded bg-gray-700 text-white">
+        </div>
+        <div class="mb-3">
+          <label class="block text-sm font-bold mb-1">Tags</label>
+          <div id="detail-tags-container" class="tag-container mb-2"></div>
+          <div class="flex gap-2">
+            <input id="detail-tag-input" type="text" placeholder="Add a tag" class="p-2 rounded bg-gray-700 text-white flex-grow">
+            <button onclick="addTagToDetail()" class="btn btn-accent px-3">Add</button>
+          </div>
+        </div>
+        <div class="flex items-center">
+          <input id="detail-favorite" type="checkbox" class="mr-2">
+          <label>Add to Favorites</label>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-between">
+      <button onclick="deleteCharacter()" class="btn btn-gray px-4 py-2" style="background-color: #dc2626;">Delete Character</button>
+      <div class="flex gap-2">
+        <button onclick="closeDetailPopup()" class="btn btn-gray px-4 py-2">Cancel</button>
+        <button onclick="saveCharacterDetails()" class="btn btn-accent px-4 py-2">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Batch Tag Popup -->
+  <div id="batch-tag-popup" class="popup" style="width: 400px;">
+    <h2 class="text-xl font-bold text-center mb-4">Add Tags</h2>
+    <p class="mb-4" style="opacity: 0.8;">Add tags to <span id="selected-count" class="font-bold">0</span> selected characters:</p>
+    
+    <div class="mb-4">
+      <label class="block text-sm font-bold mb-1">Tags</label>
+      <div class="flex gap-2">
+        <input id="batch-tag-input" type="text" placeholder="Add a tag" class="p-2 rounded bg-gray-700 text-white flex-grow">
+        <button onclick="addBatchTag()" class="btn btn-accent px-3">Add</button>
+      </div>
+      <div id="batch-tags-container" class="tag-container mt-2"></div>
+    </div>
+    
+    <div class="flex justify-end gap-2 mt-4">
+      <button onclick="closeBatchTagPopup()" class="btn btn-gray px-4 py-2">Cancel</button>
+      <button onclick="applyBatchTags()" class="btn btn-accent px-4 py-2">Apply Tags</button>
+    </div>
+  </div>
+
+  <!-- Profile Manager Popup -->
+  <div id="profile-manager-popup" class="popup" style="width: 500px;">
+    <h2 class="text-xl font-bold text-center mb-4">Manage Profiles</h2>
+    
+    <div class="mb-4">
+      <div class="flex gap-2 mb-4">
+        <input id="new-profile-name" type="text" placeholder="New profile name" class="input-field flex-grow" onkeydown="if(event.key === 'Enter') { createProfile(); }">
+        <button onclick="createProfile()" class="btn btn-accent">Create Profile</button>
+      </div>
+      
+      <div id="profile-list" class="mb-4">
+        <!-- Profile items will be rendered here -->
+      </div>
+      
+      <div class="text-sm" style="opacity: 0.7;">
+        <p class="mb-2">Hotkeys:</p>
+        <p>• Ctrl/Cmd + 1-9: Quick switch to profile</p>
+        <p>• Ctrl/Cmd + P: Open profile manager</p>
+        <p>• Each profile maintains its own characters, favorites, and settings</p>
+      </div>
+    </div>
+    
+    <div class="flex justify-end">
+      <button onclick="closeProfileManager()" class="btn btn-gray px-4 py-2">Close</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <!-- Left side - Title with settings -->
+    <div class="title-container">
+      <div class="settings-menu" onclick="toggleSettingsPopup()">⚙️</div>
+      <h1 class="text-2xl font-bold">Character Select</h1>
+      <div class="profile-selector">
+        <select id="profile-select" onchange="switchProfile(this.value)" class="profile-dropdown">
+          <option value="default">Default</option>
+        </select>
+        <button onclick="openProfileManager()" class="btn btn-gray btn-sm" style="margin-left: 8px;" title="Manage profiles">✏️</button>
+      </div>
+    </div>
+    
+    <!-- Center - Search Bar -->
+    <div class="search-container">
+      <button onclick="toggleRegexSearch()" id="regex-btn" class="btn btn-gray" title="Toggle regex search" style="font-family: monospace; font-weight: bold;">.*</button>
+      <input id="search-input" type="text" placeholder="Search characters..." onkeyup="searchCharacters()" class="input-field">
+      <button onclick="clearSearch()" class="search-clear-btn">Clear</button>
+      <div class="search-results" id="search-results">
+        <div class="search-count" id="search-count"></div>
+        <div class="search-tags" id="search-tags"></div>
+      </div>
+    </div>
+    
+    <!-- Right side - Add characters -->
+    <div class="add-container">
+      <input id="new-character-name" type="text" placeholder="New character" class="input-field mr-2" onkeydown="if(event.key === 'Enter') { addCharacter(); }">
+      <button onclick="addCharacter()" class="btn btn-accent px-2 py-1 mr-1">
+        Add
+      </button>
+      <button onclick="openBatchPopup()" class="btn btn-accent px-2 py-1">
+        Batch
+      </button>
+    </div>
+  </header>
+
+  <!-- Favorites Bar -->
+  <section style="width: 100%;">
+    <div class="section-header">
+      <div>⭐<span>Favorites</span></div>
+    </div>
+    <div id="favorites-bar" class="favorites-bar"></div>
+  </section>
+
+  <!-- Character Grid Section -->
+  <section style="width: 100%;">
+    <div class="section-header">
+      <div>🎭 <span>Characters</span></div>
+      <button onclick="toggleSelectionMode()" id="selection-toggle" class="btn btn-gray btn-sm mr-2">Enable Selection</button>
+    </div>
+    <div class="grid-container">
+      <div id="character-grid" class="character-grid"></div>
+    </div>
+  </section>
+
+  <!-- Selection Tools -->
+  <div class="selection-tools" id="selection-tools">
+    <div>
+      <span id="selection-count">0 selected</span>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="deselectAll()" class="btn btn-gray btn-sm">Clear Selection</button>
+      <button onclick="deleteSelectedCharacters()" class="btn btn-gray btn-sm" style="background-color: #dc2626;">Delete Selected</button>
+      <button onclick="openBatchTagPopup()" class="btn btn-accent btn-sm">Add Tags</button>
+      <button onclick="addSelectedToFavorites()" class="btn btn-accent btn-sm">Add to Favorites</button>
+    </div>
+  </div>
+
+  <script>
+    // Initialize state variables first to avoid initialization errors
+    let profiles = {};
+    let currentProfileId = 'default';
+    let characters = [];
+    let favorites = [];
+    let currentCharacter = null;
+    let draggedElement = null;
+    let searchQuery = '';
+    let selectedCharacters = [];
+    let selectionMode = false;
+    let batchTags = [];
+    let activePopup = null;
+    let settings = { theme: 'default-theme', gridView: true };
+    let themeMenuTimeout = null;
+    let detailTagListener = null;
+    let useRegexSearch = false;
+    let observer = null;
+    let currentPage = 0;
+    const ITEMS_PER_PAGE = 100;
+    let autoBackupInterval = null;
+    
+    // Load data from localStorage after variables are initialized
+    function loadData() {
+      try {
+        // Check if we need to migrate from old format
+        const oldCharacters = localStorage.getItem('characters');
+        const savedProfiles = localStorage.getItem('profiles');
+        
+        if (!savedProfiles && oldCharacters) {
+          // Migrate from old format
+          migrateFromOldFormat();
+        } else if (savedProfiles) {
+          // Load profiles
+          profiles = JSON.parse(savedProfiles);
+        } else {
+          // Initialize with default profile
+          initializeDefaultProfile();
+        }
+        
+        // Load current profile ID
+        currentProfileId = localStorage.getItem('currentProfileId') || 'default';
+        
+        // Ensure current profile exists
+        if (!profiles[currentProfileId]) {
+          currentProfileId = 'default';
+        }
+        
+        // Load data for current profile
+        loadProfileData(currentProfileId);
+        
+        // Load global settings
+        settings = JSON.parse(localStorage.getItem('settings') || '{"theme": "default-theme", "gridView": true}');
+        
+        // Update profile selector
+        updateProfileSelector();
+      } catch (error) {
+        console.error('Error loading data:', error);
+        initializeDefaultProfile();
+      }
+    }
+    
+    function migrateFromOldFormat() {
+      try {
+        const oldCharacters = JSON.parse(localStorage.getItem('characters') || '[]');
+        const oldFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+        
+        // Create default profile with old data
+        profiles = {
+          'default': {
+            id: 'default',
+            name: 'Default',
+            characters: oldCharacters,
+            favorites: oldFavorites,
+            created: new Date().toISOString()
+          }
+        };
+        
+        // Save profiles
+        localStorage.setItem('profiles', JSON.stringify(profiles));
+        localStorage.setItem('currentProfileId', 'default');
+        
+        showToast('Data migrated to new profile system');
+      } catch (error) {
+        console.error('Migration error:', error);
+        initializeDefaultProfile();
+      }
+    }
+    
+    function loadProfileData(profileId) {
+      const profile = profiles[profileId];
+      if (profile) {
+        characters = profile.characters || [];
+        favorites = profile.favorites || [];
+      } else {
+        characters = [];
+        favorites = [];
+      }
+    }
+    
+    function initializeDefaultProfile() {
+      profiles = {
+        'default': {
+          id: 'default',
+          name: 'Default',
+          characters: [],
+          favorites: [],
+          created: new Date().toISOString()
+        }
+      };
+      currentProfileId = 'default';
+      characters = [];
+      favorites = [];
+      settings = { theme: 'default-theme', gridView: true };
+    }
+    
+    // Initialize settings
+    function initSettings() {
+      // Set theme
+      setTheme(settings.theme || 'default-theme', false);
+      
+      // Set view (grid or list)
+      if (!settings.gridView) {
+        document.getElementById('character-grid').classList.add('list-view');
+      }
+    }
+    
+    function saveSettings() {
+      localStorage.setItem('settings', JSON.stringify(settings));
+    }
+
+    function save() {
+      // Save current profile data
+      if (profiles[currentProfileId]) {
+        profiles[currentProfileId].characters = characters;
+        profiles[currentProfileId].favorites = favorites;
+        profiles[currentProfileId].lastModified = new Date().toISOString();
+      }
+      
+      // Save profiles and current profile ID
+      localStorage.setItem('profiles', JSON.stringify(profiles));
+      localStorage.setItem('currentProfileId', currentProfileId);
+      
+      // Legacy save for backward compatibility
+      localStorage.setItem('characters', JSON.stringify(characters));
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      
+      updateBackupStatus();
+    }
+    
+    // Auto-backup functionality
+    function startAutoBackup() {
+      // Save immediately when starting
+      createBackup();
+      
+      // Then save every 5 minutes
+      autoBackupInterval = setInterval(() => {
+        createBackup();
+      }, 5 * 60 * 1000); // 5 minutes
+    }
+    
+    function createBackup() {
+      const backup = {
+        profiles: profiles,
+        currentProfileId: currentProfileId,
+        settings: settings,
+        timestamp: new Date().toISOString()
+      };
+      
+      try {
+        localStorage.setItem('character-backup', JSON.stringify(backup));
+        localStorage.setItem('backup-timestamp', backup.timestamp);
+        updateBackupStatus();
+      } catch (error) {
+        console.error('Backup failed:', error);
+      }
+    }
+    
+    function updateBackupStatus() {
+      const backupTimestamp = localStorage.getItem('backup-timestamp');
+      const statusEl = document.getElementById('backup-status');
+      
+      if (backupTimestamp) {
+        const date = new Date(backupTimestamp);
+        statusEl.textContent = `Last backup: ${date.toLocaleTimeString()}`;
+      } else {
+        statusEl.textContent = 'No backup found';
+      }
+    }
+    
+    function updateStats() {
+      const profileName = profiles[currentProfileId] ? profiles[currentProfileId].name : 'Unknown';
+      document.getElementById('total-characters').textContent = `${characters.length} character${characters.length !== 1 ? 's' : ''} in ${profileName}`;
+      document.getElementById('total-favorites').textContent = `${favorites.length} favorite${favorites.length !== 1 ? 's' : ''}`;
+    }
+    
+    // Profile management functions
+    function switchProfile(profileId) {
+      if (profileId === currentProfileId) return;
+      
+      // Save current profile data
+      save();
+      
+      // Switch to new profile
+      currentProfileId = profileId;
+      loadProfileData(profileId);
+      
+      // Clear selection
+      selectedCharacters = [];
+      searchQuery = '';
+      document.getElementById('search-input').value = '';
+      
+      // Re-render everything
+      updateProfileSelector();
+      renderCharacters();
+      renderFavorites();
+      updateStats();
+      
+      // Save current profile preference
+      localStorage.setItem('currentProfileId', currentProfileId);
+      
+      showToast(`Switched to profile: ${profiles[profileId].name}`);
+    }
+    
+    function createProfile() {
+      const input = document.getElementById('new-profile-name');
+      const name = input.value.trim();
+      
+      if (!name) {
+        showToast('Please enter a profile name', true);
+        return;
+      }
+      
+      // Generate unique ID
+      const id = 'profile_' + Date.now();
+      
+      // Create new profile
+      profiles[id] = {
+        id: id,
+        name: name,
+        characters: [],
+        favorites: [],
+        created: new Date().toISOString()
+      };
+      
+      // Save profiles
+      localStorage.setItem('profiles', JSON.stringify(profiles));
+      
+      // Update UI first
+      updateProfileSelector();
+      
+      // Then switch to new profile
+      switchProfile(id);
+      
+      // Update UI
+      input.value = '';
+      renderProfileList();
+      
+      showToast(`Created profile: ${name}`);
+    }
+    
+    function deleteProfile(profileId) {
+      if (profileId === 'default') {
+        showToast('Cannot delete default profile', true);
+        return;
+      }
+      
+      const profileName = profiles[profileId].name;
+      
+      if (confirm(`Are you sure you want to delete the profile "${profileName}"? This cannot be undone.`)) {
+        delete profiles[profileId];
+        
+        // If deleting current profile, switch to default
+        if (currentProfileId === profileId) {
+          switchProfile('default');
+        }
+        
+        // Save and update UI
+        localStorage.setItem('profiles', JSON.stringify(profiles));
+        updateProfileSelector();
+        renderProfileList();
+        
+        showToast(`Deleted profile: ${profileName}`);
+      }
+    }
+    
+    function renameProfile(profileId) {
+      if (profileId === 'default') {
+        showToast('Cannot rename default profile', true);
+        return;
+      }
+      
+      const currentName = profiles[profileId].name;
+      const newName = prompt('Enter new profile name:', currentName);
+      
+      if (newName && newName.trim() && newName !== currentName) {
+        profiles[profileId].name = newName.trim();
+        save();
+        updateProfileSelector();
+        renderProfileList();
+        showToast(`Renamed profile to: ${newName}`);
+      }
+    }
+    
+    function updateProfileSelector() {
+      const select = document.getElementById('profile-select');
+      select.innerHTML = '';
+      
+      // Sort profiles by name, but keep default first
+      const sortedProfiles = Object.values(profiles).sort((a, b) => {
+        if (a.id === 'default') return -1;
+        if (b.id === 'default') return 1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      sortedProfiles.forEach(profile => {
+        const option = document.createElement('option');
+        option.value = profile.id;
+        option.textContent = profile.name;
+        if (profile.id === currentProfileId) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+    }
+    
+    function renderProfileList() {
+      const container = document.getElementById('profile-list');
+      container.innerHTML = '';
+      
+      // Sort profiles
+      const sortedProfiles = Object.values(profiles).sort((a, b) => {
+        if (a.id === 'default') return -1;
+        if (b.id === 'default') return 1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      sortedProfiles.forEach((profile, index) => {
+        const div = document.createElement('div');
+        div.className = 'profile-item';
+        if (profile.id === currentProfileId) {
+          div.classList.add('active');
+        }
+        
+        const hotkeyNum = index + 1;
+        const hotkeyText = hotkeyNum <= 9 ? `<span class="hotkey-badge">Ctrl+${hotkeyNum}</span>` : '';
+        
+        div.innerHTML = `
+          <div>
+            <div class="profile-name">${profile.name}${hotkeyText}</div>
+            <div class="profile-stats">${profile.characters.length} characters, ${profile.favorites.length} favorites</div>
+          </div>
+          <div class="profile-actions">
+            ${profile.id !== 'default' ? `
+              <button onclick="renameProfile('${profile.id}')" class="btn btn-gray btn-sm">Rename</button>
+              <button onclick="deleteProfile('${profile.id}')" class="btn btn-gray btn-sm" style="background-color: #dc2626;">Delete</button>
+            ` : ''}
+            <button onclick="switchToProfile('${profile.id}')" class="btn btn-accent btn-sm">Switch</button>
+          </div>
+        `;
+        
+        container.appendChild(div);
+      });
+    }
+    
+    function switchToProfile(profileId) {
+      switchProfile(profileId);
+      closeProfileManager();
+    }
+    
+    function openProfileManager() {
+      renderProfileList();
+      showPopup(document.getElementById('profile-manager-popup'));
+    }
+    
+    function closeProfileManager() {
+      closePopup('profile-manager-popup');
+    }
+    
+    // Theme functions
+    function showThemeMenu() {
+      cancelThemeMenuHide();
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeMenu = document.getElementById('theme-menu');
+      const rect = themeToggle.getBoundingClientRect();
+      
+      themeMenu.style.position = 'fixed';
+      themeMenu.style.left = rect.right + 5 + 'px';
+      themeMenu.style.top = rect.top + 'px';
+      themeMenu.style.display = 'block';
+    }
+    
+    function hideThemeMenuDelayed() {
+      themeMenuTimeout = setTimeout(() => {
+        document.getElementById('theme-menu').style.display = 'none';
+      }, 300);
+    }
+    
+    function cancelThemeMenuHide() {
+      if (themeMenuTimeout) {
+        clearTimeout(themeMenuTimeout);
+        themeMenuTimeout = null;
+      }
+    }
+    
+    function hideThemeMenu() {
+      document.getElementById('theme-menu').style.display = 'none';
+    }
+    
+    function setTheme(theme, showNotification = true) {
+      // Remove current theme class
+      document.body.classList.remove('default-theme', 'dark-theme', 'light-theme');
+      
+      // Add new theme class
+      document.body.classList.add(theme);
+      
+      // Update settings
+      settings.theme = theme;
+      saveSettings();
+      
+      // Update theme menu
+      document.querySelectorAll('.theme-menu .menu-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Close settings menu
+      hideThemeMenu();
+      
+      if (showNotification) {
+        const themeName = theme.replace('-theme', '');
+        showToast(`Theme changed to ${themeName}`);
+        toggleSettingsPopup();
+      }
+    }
+    
+    // List view toggle
+    function toggleListView() {
+      settings.gridView = !settings.gridView;
+      saveSettings();
+      
+      const grid = document.getElementById('character-grid');
+      if (settings.gridView) {
+        grid.classList.remove('list-view');
+        showToast('Switched to Grid view');
+      } else {
+        grid.classList.add('list-view');
+        showToast('Switched to List view');
+      }
+      
+      toggleSettingsPopup();
+    }
+    
+    // Regex search toggle
+    function toggleRegexSearch() {
+      useRegexSearch = !useRegexSearch;
+      const btn = document.getElementById('regex-btn');
+      
+      if (useRegexSearch) {
+        btn.classList.add('active', 'btn-accent');
+        btn.classList.remove('btn-gray');
+      } else {
+        btn.classList.remove('active', 'btn-accent');
+        btn.classList.add('btn-gray');
+      }
+      
+      searchCharacters();
+    }
+
+    function createCard(character, isFavorite = false) {
+      const card = document.createElement('div');
+      card.className = 'card entering';
+      card.draggable = !selectionMode;
+      card.dataset.name = character.name;
+      
+      if (selectionMode) {
+        card.classList.add('selection-mode');
+      }
+      
+      if (selectedCharacters.includes(character.name)) {
+        card.classList.add('selected');
+      }
+
+      // Tag display
+      const tagDisplay = character.tags && character.tags.length > 0 
+        ? `<div class="absolute top-1 left-1 bg-blue-500 text-xs rounded-full w-4 h-4 flex items-center justify-center" style="z-index: 10;" title="${character.tags.join(', ')}">+</div>` 
+        : '';
+
+      card.innerHTML = `
+        <div class="card-container">
+          <img src="${character.avatar}" class="w-20 h-20 rounded-sm object-cover mt-2">
+          <h3 class="text-sm font-bold text-center truncate w-full px-2 mt-1">${character.name}</h3>
+          ${isFavorite ? '<button class="absolute top-1 right-1 text-xs bg-red-500 rounded-full w-4 h-4 flex items-center justify-center cursor-pointer" style="z-index: 10;" onclick="removeFromFavorites(event, \''+character.name+'\')">×</button>' : ''}
+          ${tagDisplay}
+          <div class="checkbox-container">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="16" height="16">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+          </div>
+        </div>
+      `;
+      
+      // Make entire card clickable
+      card.addEventListener('click', (e) => {
+        // Prevent action if clicking on a button
+        if (e.target.closest('button')) {
+          return;
+        }
+        
+        // Check if clicking on the checkbox area
+        const checkboxContainer = card.querySelector('.checkbox-container');
+        const rect = checkboxContainer.getBoundingClientRect();
+        const clickX = e.clientX;
+        const clickY = e.clientY;
+        
+        if (clickX >= rect.left && clickX <= rect.right && 
+            clickY >= rect.top && clickY <= rect.bottom) {
+          // Clicked on checkbox - enable selection mode if not already enabled
+          e.stopPropagation();
+          if (!selectionMode) {
+            toggleSelectionMode();
+          }
+          toggleCharacterSelection(character.name);
+          updateSelectionUI();
+        } else {
+          // Clicked elsewhere on card
+          handleCardClick(e, character.name);
+        }
+      });
+      
+      card.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (selectionMode) {
+          toggleCharacterSelection(character.name);
+          updateSelectionUI();
+        } else {
+          openDetailPopup(character);
+        }
+      });
+
+      card.addEventListener('dragstart', (e) => {
+        if (selectionMode) {
+          e.preventDefault();
+          return;
+        }
+        
+        draggedElement = card;
+        setTimeout(() => card.classList.add('dragging'), 0);
+        // Update favorites to show drop zone
+        if (!document.getElementById('fav-drop-zone')) {
+          const favBar = document.getElementById('favorites-bar');
+          const dropZone = createDropZone();
+          favBar.appendChild(dropZone);
+        }
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        draggedElement = null;
+        // Delay to allow drop event to process
+        setTimeout(renderFavorites, 10);
+      });
+
+      // Animate card entrance
+      setTimeout(() => {
+        card.classList.remove('entering');
+      }, 10 + Math.random() * 100);
+
+      return card;
+    }
+
+    function handleCardClick(event, name) {
+      if (selectionMode) {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleCharacterSelection(name);
+        updateSelectionUI();
+      } else {
+        visitCharacterPage(name);
+      }
+    }
+
+    function toggleCharacterSelection(name) {
+      const index = selectedCharacters.indexOf(name);
+      if (index === -1) {
+        selectedCharacters.push(name);
+      } else {
+        selectedCharacters.splice(index, 1);
+      }
+    }
+
+    function updateSelectionUI() {
+      document.querySelectorAll('.card').forEach(card => {
+        const name = card.dataset.name;
+        if (selectedCharacters.includes(name)) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+      
+      document.getElementById('selection-count').textContent = `${selectedCharacters.length} selected`;
+      
+      // Show or hide selection tools
+      const selectionTools = document.getElementById('selection-tools');
+      if (selectedCharacters.length > 0) {
+        selectionTools.style.display = 'flex';
+        setTimeout(() => {
+          selectionTools.classList.add('active');
+        }, 10);
+      } else {
+        selectionTools.classList.remove('active');
+        setTimeout(() => {
+          if (selectedCharacters.length === 0) {
+            selectionTools.style.display = 'none';
+          }
+        }, 300);
+      }
+    }
+    
+    function selectAll() {
+      if (!selectionMode) return;
+      
+      const visibleCards = document.querySelectorAll('.card:not(.lazy-load-placeholder)');
+      selectedCharacters = [];
+      
+      visibleCards.forEach(card => {
+        const name = card.dataset.name;
+        if (name) {
+          selectedCharacters.push(name);
+        }
+      });
+      
+      updateSelectionUI();
+    }
+
+    function toggleSelectionMode() {
+      selectionMode = !selectionMode;
+      const btn = document.getElementById('selection-toggle');
+      
+      if (selectionMode) {
+        btn.textContent = 'Disable Selection';
+        btn.classList.remove('btn-gray');
+        btn.classList.add('btn-accent');
+        document.body.style.paddingBottom = '50px';
+      } else {
+        btn.textContent = 'Enable Selection';
+        btn.classList.remove('btn-accent');
+        btn.classList.add('btn-gray');
+        deselectAll();
+        document.body.style.paddingBottom = '0';
+      }
+      
+      renderCharacters();
+      renderFavorites();
+    }
+
+    function deselectAll() {
+      selectedCharacters = [];
+      document.querySelectorAll('.card.selected').forEach(card => {
+        card.classList.remove('selected');
+      });
+      updateSelectionUI();
+    }
+    
+    function deleteSelectedCharacters() {
+      if (selectedCharacters.length === 0) return;
+      
+      const count = selectedCharacters.length;
+      if (confirm(`Are you sure you want to delete ${count} character${count !== 1 ? 's' : ''}?`)) {
+        // Remove from characters array
+        characters = characters.filter(c => !selectedCharacters.includes(c.name));
+        
+        // Remove from favorites if present
+        favorites = favorites.filter(f => !selectedCharacters.includes(f.name));
+        
+        // Clear selection
+        selectedCharacters = [];
+        
+        save();
+        renderCharacters();
+        renderFavorites();
+        updateStats();
+        updateSelectionUI();
+        
+        showToast(`Deleted ${count} character${count !== 1 ? 's' : ''}`);
+      }
+    }
+
+    function createDropZone() {
+      const dropZone = document.createElement('div');
+      dropZone.className = 'drop-indicator';
+      dropZone.id = 'fav-drop-zone';
+      dropZone.textContent = 'Drag characters here to add to favorites';
+      
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('bg-blue-900', 'bg-opacity-20');
+      });
+
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('bg-blue-900', 'bg-opacity-20');
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('bg-blue-900', 'bg-opacity-20');
+        
+        if (draggedElement) {
+          const name = draggedElement.dataset.name;
+          toggleFavorite(name, true);
+        }
+      });
+      
+      return dropZone;
+    }
+
+    function visitCharacterPage(name) {
+      window.open('https://www.f-list.net/c/' + name, '_blank');
+    }
+
+    function renderCharacters() {
+      const grid = document.getElementById('character-grid');
+      grid.innerHTML = '';
+      
+      // Disconnect any existing observer
+      if (observer) {
+        observer.disconnect();
+      }
+      
+      let listToRender = [...characters];
+      
+      // Apply search filter if any
+      if (searchQuery) {
+        if (useRegexSearch) {
+          try {
+            const regex = new RegExp(searchQuery, 'i');
+            listToRender = listToRender.filter(c => 
+              regex.test(c.name) || 
+              (c.tags && c.tags.some(tag => regex.test(tag)))
+            );
+          } catch (error) {
+            // Invalid regex, fall back to normal search
+            showToast('Invalid regex pattern', true);
+            listToRender = listToRender.filter(c => 
+              c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              (c.tags && c.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
+            );
+          }
+        } else {
+          listToRender = listToRender.filter(c => 
+            c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            (c.tags && c.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
+          );
+        }
+        
+        // Update search results count
+        const countEl = document.getElementById('search-count');
+        countEl.textContent = `Found ${listToRender.length} character${listToRender.length !== 1 ? 's' : ''}`;
+        
+        // Update tags section
+        updateSearchTags(listToRender);
+      }
+      
+      // Sort alphabetically
+      listToRender.sort((a, b) => a.name.localeCompare(b.name));
+      
+      // Reset pagination
+      currentPage = 0;
+      
+      // Render first page
+      renderPage(listToRender, 0);
+      
+      // Setup lazy loading for remaining pages
+      if (listToRender.length > ITEMS_PER_PAGE) {
+        setupLazyLoading(listToRender);
+      }
+    }
+    
+    function renderPage(allCharacters, pageNum) {
+      const grid = document.getElementById('character-grid');
+      const start = pageNum * ITEMS_PER_PAGE;
+      const end = start + ITEMS_PER_PAGE;
+      const pageCharacters = allCharacters.slice(start, end);
+      
+      pageCharacters.forEach((c, index) => {
+        const card = createCard(c, isFavorite(c.name));
+        grid.appendChild(card);
+      });
+      
+      // Add placeholder for next page if needed
+      if (end < allCharacters.length) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'lazy-load-placeholder';
+        placeholder.dataset.page = pageNum + 1;
+        placeholder.innerHTML = '<div>Loading more characters...</div>';
+        grid.appendChild(placeholder);
+      }
+    }
+    
+    function setupLazyLoading(allCharacters) {
+      if (observer) {
+        observer.disconnect();
+      }
+      
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const placeholder = entry.target;
+            const pageNum = parseInt(placeholder.dataset.page);
+            
+            // Remove placeholder
+            placeholder.remove();
+            
+            // Render next page
+            renderPage(allCharacters, pageNum);
+            currentPage = pageNum;
+            
+            // Re-setup observer for new placeholders
+            const newPlaceholders = document.querySelectorAll('.lazy-load-placeholder');
+            newPlaceholders.forEach(newPlaceholder => {
+              observer.observe(newPlaceholder);
+            });
+          }
+        });
+      }, {
+        rootMargin: '100px'
+      });
+      
+      // Observe all placeholders
+      document.querySelectorAll('.lazy-load-placeholder').forEach(placeholder => {
+        observer.observe(placeholder);
+      });
+    }
+
+    function updateSearchTags(results) {
+      const tagsContainer = document.getElementById('search-tags');
+      tagsContainer.innerHTML = '';
+      
+      // Collect all unique tags from search results
+      const allTags = new Set();
+      results.forEach(char => {
+        if (char.tags && char.tags.length > 0) {
+          char.tags.forEach(tag => allTags.add(tag));
+        }
+      });
+      
+      // Create tag elements
+      if (allTags.size > 0) {
+        const tagHeading = document.createElement('div');
+        tagHeading.className = 'text-xs mb-1';
+        tagHeading.style.opacity = '0.7';
+        tagHeading.textContent = 'Filter by tag:';
+        tagsContainer.appendChild(tagHeading);
+        
+        Array.from(allTags).sort().forEach(tag => {
+          const tagEl = document.createElement('span');
+          tagEl.className = 'search-tag';
+          tagEl.textContent = tag;
+          tagEl.addEventListener('click', () => {
+            document.getElementById('search-input').value = tag;
+            searchCharacters();
+            document.getElementById('search-results').style.display = 'none';
+          });
+          tagsContainer.appendChild(tagEl);
+        });
+      }
+    }
+
+    function renderFavorites() {
+      const favBar = document.getElementById('favorites-bar');
+      favBar.innerHTML = ''; // Clear the favorites bar
+      
+      // Add the favorites
+      favorites.sort((a, b) => a.name.localeCompare(b.name));
+      
+      // Show drop indicator only if no favorites
+      if (favorites.length === 0) {
+        favBar.appendChild(createDropZone());
+      } else {
+        favorites.forEach(c => favBar.appendChild(createCard(c, true)));
+        
+        // Make the entire favorites bar a drop target
+        favBar.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          favBar.classList.add('bg-blue-900', 'bg-opacity-10');
+        });
+
+        favBar.addEventListener('dragleave', () => {
+          favBar.classList.remove('bg-blue-900', 'bg-opacity-10');
+        });
+
+        favBar.addEventListener('drop', (e) => {
+          e.preventDefault();
+          favBar.classList.remove('bg-blue-900', 'bg-opacity-10');
+          
+          if (draggedElement) {
+            const name = draggedElement.dataset.name;
+            toggleFavorite(name, true);
+          }
+        });
+      }
+    }
+
+    function isFavorite(name) {
+      return favorites.some(f => f.name === name);
+    }
+
+    function addCharacter() {
+      const input = document.getElementById('new-character-name');
+      const name = input.value.trim();
+      if (!name) return;
+      if (characters.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        showToast('Character already exists!', true);
+        return;
+      }
+      const newChar = { 
+        name, 
+        avatar: 'https://static.f-list.net/images/avatar/' + encodeURIComponent(name.toLowerCase()) + '.png', 
+        tags: [] 
+      };
+      characters.push(newChar);
+      
+      // Sort characters alphabetically
+      characters.sort((a, b) => a.name.localeCompare(b.name));
+      
+      input.value = '';
+      save();
+      renderCharacters();
+      updateStats();
+      showToast(`Added character: ${name}`);
+    }
+
+    function openBatchPopup() {
+      const popup = document.getElementById('batch-popup');
+      showPopup(popup);
+      // Reset count
+      document.getElementById('batch-count').textContent = '0';
+      // Focus the textarea
+      setTimeout(() => {
+        document.getElementById('batch-add-input').focus();
+      }, 100);
+    }
+    
+    function closeBatchPopup() {
+      closePopup('batch-popup');
+      document.getElementById('batch-add-input').value = '';
+      document.getElementById('batch-count').textContent = '0';
+    }
+    
+    function updateBatchCount() {
+      const input = document.getElementById('batch-add-input');
+      const inputValue = input.value.trim();
+      
+      if (!inputValue) {
+        document.getElementById('batch-count').textContent = '0';
+        return;
+      }
+      
+      // Use the same parsing logic as batchAddCharacters
+      const names = inputValue
+        .split(/[\n\r]+/)
+        .flatMap(line => line.split(/[,;\t]+/))
+        .map(name => name.trim())
+        .filter(name => name);
+      
+      const uniqueNames = [...new Set(names)];
+      document.getElementById('batch-count').textContent = uniqueNames.length;
+    }
+
+    function batchAddCharacters() {
+      const input = document.getElementById('batch-add-input');
+      const inputValue = input.value.trim();
+      
+      if (!inputValue) {
+        showToast('Please enter character names', true);
+        return;
+      }
+      
+      // Split by multiple separators: newlines, commas, semicolons, and tabs
+      const names = inputValue
+        .split(/[\n\r]+/) // Split by newlines first
+        .flatMap(line => line.split(/[,;\t]+/)) // Then split each line by comma, semicolon, or tab
+        .map(name => name.trim())
+        .filter(name => name); // Remove empty strings
+      
+      // Remove duplicates from the input list
+      const uniqueNames = [...new Set(names)];
+      
+      let added = 0;
+      let skipped = 0;
+      const addedNames = [];
+      const skippedNames = [];
+      
+      uniqueNames.forEach(name => {
+        if (!characters.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+          const newChar = { 
+            name, 
+            avatar: 'https://static.f-list.net/images/avatar/' + encodeURIComponent(name.toLowerCase()) + '.png', 
+            tags: [] 
+          };
+          characters.push(newChar);
+          addedNames.push(name);
+          added++;
+        } else {
+          skippedNames.push(name);
+          skipped++;
+        }
+      });
+      
+      // Sort characters alphabetically after adding new ones
+      characters.sort((a, b) => a.name.localeCompare(b.name));
+      
+      input.value = '';
+      save();
+      renderCharacters();
+      updateStats();
+      closeBatchPopup();
+      
+      // Create detailed message
+      let message = '';
+      if (added > 0) {
+        message = `Added ${added} character${added !== 1 ? 's' : ''}`;
+        if (skipped > 0) {
+          message += `, skipped ${skipped} duplicate${skipped !== 1 ? 's' : ''}`;
+        }
+      } else {
+        message = 'No new characters added (all duplicates)';
+      }
+      
+      showToast(message, added === 0);
+      
+      // Log details to console for reference
+      if (addedNames.length > 0) {
+        console.log('Added characters:', addedNames.join(', '));
+      }
+      if (skippedNames.length > 0) {
+        console.log('Skipped duplicates:', skippedNames.join(', '));
+      }
+    }
+
+    function toggleFavorite(name, isFavorite) {
+      const char = characters.find(c => c.name === name);
+      if (!char) return;
+      
+      if (isFavorite) {
+        if (!favorites.some(f => f.name === name)) {
+          favorites.push({...char});
+          showToast(`Added ${name} to favorites`);
+        }
+      } else {
+        favorites = favorites.filter(fav => fav.name !== name);
+        showToast(`Removed ${name} from favorites`);
+      }
+      save();
+      renderFavorites();
+      renderCharacters(); // Refresh the main grid too to update favorite indicators
+      updateStats();
+    }
+
+    function removeFromFavorites(event, name) {
+      event.stopPropagation();
+      toggleFavorite(name, false);
+    }
+
+    function clearFavorites() {
+      const profileName = profiles[currentProfileId].name;
+      if (confirm(`Are you sure you want to clear all favorites in the "${profileName}" profile?`)) {
+        favorites = [];
+        save();
+        renderFavorites();
+        renderCharacters();
+        updateStats();
+        toggleSettingsPopup();
+        showToast(`Cleared all favorites in ${profileName}`);
+      }
+    }
+
+    function deleteCharacter() {
+      if (!currentCharacter) return;
+      
+      if (confirm(`Are you sure you want to delete ${currentCharacter.name}?`)) {
+        characters = characters.filter(c => c.name !== currentCharacter.name);
+        favorites = favorites.filter(f => f.name !== currentCharacter.name);
+        save();
+        renderCharacters();
+        renderFavorites();
+        updateStats();
+        closeDetailPopup();
+        showToast(`Deleted character: ${currentCharacter.name}`);
+      }
+    }
+
+    function updateCharacter(oldName, updatedChar) {
+      // Update in characters array
+      const charIndex = characters.findIndex(c => c.name === oldName);
+      if (charIndex >= 0) {
+        characters[charIndex] = {...updatedChar};
+      }
+      
+      // Update in favorites if present
+      const favIndex = favorites.findIndex(f => f.name === oldName);
+      if (favIndex >= 0) {
+        favorites[favIndex] = {...updatedChar};
+      }
+      
+      save();
+      renderCharacters();
+      renderFavorites();
+      updateStats();
+      showToast(`Updated character: ${updatedChar.name}`);
+    }
+
+    function uploadAvatar(name, file) {
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const char = characters.find(c => c.name === name);
+        if (char) {
+          char.avatar = e.target.result;
+          
+          // Update current character if it's the same
+          if (currentCharacter && currentCharacter.name === name) {
+            currentCharacter.avatar = e.target.result;
+            document.getElementById('detail-avatar').src = e.target.result;
+          }
+          
+          // Also update in favorites if present
+          const favChar = favorites.find(f => f.name === name);
+          if (favChar) favChar.avatar = e.target.result;
+          
+          save();
+          renderCharacters();
+          renderFavorites();
+          showToast('Avatar updated');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function toggleSettingsPopup() {
+      const popup = document.getElementById('settings-popup');
+      updateStats();
+      updateBackupStatus();
+      if (popup.style.display === 'block') {
+        popup.classList.remove('active');
+        setTimeout(() => {
+          popup.style.display = 'none';
+        }, 200);
+      } else {
+        popup.style.display = 'block';
+        setTimeout(() => {
+          popup.classList.add('active');
+        }, 10);
+      }
+    }
+
+    // Data management
+    function exportData() {
+      const data = {
+        profiles: profiles,
+        currentProfileId: currentProfileId,
+        settings: settings,
+        exportDate: new Date().toISOString(),
+        version: 2 // Version 2 includes profiles
+      };
+      
+      const dataStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `character-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toggleSettingsPopup();
+      showToast('Data exported successfully');
+    }
+
+    function openImportDialog() {
+      toggleSettingsPopup();
+      const popup = document.getElementById('import-dialog');
+      showPopup(popup);
+    }
+
+    function closeImportDialog() {
+      closePopup('import-dialog');
+    }
+
+    function validateImportData(data) {
+      // Check basic structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid data format');
+      }
+      
+      // Check if it's the new format (with profiles)
+      if (data.version === 2 || data.profiles) {
+        // Validate profiles
+        if (!data.profiles || typeof data.profiles !== 'object') {
+          throw new Error('Invalid profiles data');
+        }
+        
+        // Validate each profile
+        Object.values(data.profiles).forEach(profile => {
+          if (!profile.id || !profile.name) {
+            throw new Error('Invalid profile structure');
+          }
+          if (!Array.isArray(profile.characters)) {
+            throw new Error(`Profile "${profile.name}" has invalid characters array`);
+          }
+          if (!Array.isArray(profile.favorites)) {
+            throw new Error(`Profile "${profile.name}" has invalid favorites array`);
+          }
+        });
+      } else {
+        // Old format validation
+        if (!data.characters || !Array.isArray(data.characters)) {
+          throw new Error('Characters array missing or invalid');
+        }
+        
+        // Validate each character
+        data.characters.forEach((char, index) => {
+          if (!char.name || typeof char.name !== 'string') {
+            throw new Error(`Character at index ${index} missing name`);
+          }
+          if (!char.avatar || typeof char.avatar !== 'string') {
+            throw new Error(`Character "${char.name}" missing avatar`);
+          }
+          if (char.tags && !Array.isArray(char.tags)) {
+            throw new Error(`Character "${char.name}" has invalid tags format`);
+          }
+        });
+        
+        // Validate favorites if present
+        if (data.favorites) {
+          if (!Array.isArray(data.favorites)) {
+            throw new Error('Favorites must be an array');
+          }
+          data.favorites.forEach((fav, index) => {
+            if (!fav.name || typeof fav.name !== 'string') {
+              throw new Error(`Favorite at index ${index} missing name`);
+            }
+          });
+        }
+      }
+      
+      // Validate settings if present
+      if (data.settings) {
+        if (typeof data.settings !== 'object') {
+          throw new Error('Settings must be an object');
+        }
+      }
+      
+      return true;
+    }
+
+    function importData() {
+      try {
+        const jsonData = document.getElementById('import-json').value;
+        const data = JSON.parse(jsonData);
+        
+        // Validate data
+        validateImportData(data);
+        
+        // Create backup before importing
+        createBackup();
+        
+        // Check if it's the new format (with profiles)
+        if (data.version === 2 || data.profiles) {
+          // Import profiles
+          profiles = data.profiles;
+          currentProfileId = data.currentProfileId || 'default';
+          
+          // Ensure current profile exists
+          if (!profiles[currentProfileId]) {
+            currentProfileId = 'default';
+          }
+          
+          // Load current profile data
+          loadProfileData(currentProfileId);
+        } else {
+          // Old format - import into current profile
+          characters = data.characters;
+          
+          if (data.favorites && Array.isArray(data.favorites)) {
+            favorites = data.favorites;
+          }
+          
+          // Save to current profile
+          save();
+        }
+        
+        // Import settings if available
+        if (data.settings) {
+          settings = { ...settings, ...data.settings };
+          initSettings();
+        }
+        
+        // Save everything
+        save();
+        saveSettings();
+        
+        // Update UI
+        updateProfileSelector();
+        renderCharacters();
+        renderFavorites();
+        updateStats();
+        closeImportDialog();
+        
+        const totalChars = data.version === 2 
+          ? Object.values(profiles).reduce((sum, p) => sum + p.characters.length, 0)
+          : characters.length;
+        
+        showToast(`Imported ${totalChars} characters`);
+      } catch (err) {
+        showToast('Import error: ' + err.message, true);
+      }
+    }
+
+    function deleteAllData() {
+      if (confirm('Are you sure you want to delete all data? This cannot be undone.')) {
+        // Create final backup
+        createBackup();
+        
+        localStorage.removeItem('profiles');
+        localStorage.removeItem('currentProfileId');
+        localStorage.removeItem('characters');
+        localStorage.removeItem('favorites');
+        localStorage.removeItem('settings');
+        
+        // Reset to defaults
+        initializeDefaultProfile();
+        settings = { theme: 'default-theme', gridView: true };
+        
+        save();
+        saveSettings();
+        setTheme('default-theme', false);
+        updateProfileSelector();
+        renderCharacters();
+        renderFavorites();
+        updateStats();
+        toggleSettingsPopup();
+        showToast('All data deleted (backup preserved)');
+      }
+    }
+
+    function searchCharacters() {
+      searchQuery = document.getElementById('search-input').value.trim();
+      
+      // Show search results dropdown if there's a query
+      const resultsEl = document.getElementById('search-results');
+      if (searchQuery) {
+        resultsEl.style.display = 'block';
+      } else {
+        resultsEl.style.display = 'none';
+      }
+      
+      renderCharacters();
+    }
+
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      searchQuery = '';
+      document.getElementById('search-results').style.display = 'none';
+      renderCharacters();
+    }
+
+    // Tag functions
+    function renderDetailTags() {
+      if (!currentCharacter) return;
+      
+      const container = document.getElementById('detail-tags-container');
+      container.innerHTML = '';
+      
+      if (currentCharacter.tags && currentCharacter.tags.length > 0) {
+        currentCharacter.tags.forEach(tag => {
+          const tagElement = document.createElement('span');
+          tagElement.className = 'tag';
+          tagElement.innerHTML = `${tag}<button onclick="removeTagFromDetail('${tag}')">&times;</button>`;
+          container.appendChild(tagElement);
+        });
+      }
+    }
+
+    function addTagToDetail() {
+      if (!currentCharacter) return;
+      
+      const input = document.getElementById('detail-tag-input');
+      const tag = input.value.trim();
+      
+      if (!tag) return;
+      
+      if (!currentCharacter.tags) {
+        currentCharacter.tags = [];
+      }
+      
+      if (!currentCharacter.tags.includes(tag)) {
+        currentCharacter.tags.push(tag);
+        renderDetailTags();
+      }
+      
+      input.value = '';
+    }
+
+    function removeTagFromDetail(tag) {
+      if (!currentCharacter || !currentCharacter.tags) return;
+      
+      currentCharacter.tags = currentCharacter.tags.filter(t => t !== tag);
+      renderDetailTags();
+    }
+
+    // Batch tagging functions
+    function openBatchTagPopup() {
+      document.getElementById('selected-count').textContent = selectedCharacters.length;
+      document.getElementById('batch-tags-container').innerHTML = '';
+      batchTags = [];
+      
+      const popup = document.getElementById('batch-tag-popup');
+      showPopup(popup);
+    }
+
+    function closeBatchTagPopup() {
+      closePopup('batch-tag-popup');
+      batchTags = [];
+    }
+
+    function renderBatchTags() {
+      const container = document.getElementById('batch-tags-container');
+      container.innerHTML = '';
+      
+      batchTags.forEach(tag => {
+        const tagElement = document.createElement('span');
+        tagElement.className = 'tag';
+        tagElement.innerHTML = `${tag}<button onclick="removeBatchTag('${tag}')">&times;</button>`;
+        container.appendChild(tagElement);
+      });
+    }
+
+    function addBatchTag() {
+      const input = document.getElementById('batch-tag-input');
+      const tag = input.value.trim();
+      
+      if (!tag) return;
+      
+      if (!batchTags.includes(tag)) {
+        batchTags.push(tag);
+        renderBatchTags();
+      }
+      
+      input.value = '';
+    }
+
+    function removeBatchTag(tag) {
+      batchTags = batchTags.filter(t => t !== tag);
+      renderBatchTags();
+    }
+
+    function applyBatchTags() {
+      if (batchTags.length === 0 || selectedCharacters.length === 0) {
+        closeBatchTagPopup();
+        return;
+      }
+      
+      selectedCharacters.forEach(name => {
+        const char = characters.find(c => c.name === name);
+        if (char) {
+          if (!char.tags) {
+            char.tags = [];
+          }
+          
+          // Add each tag if it doesn't already exist
+          batchTags.forEach(tag => {
+            if (!char.tags.includes(tag)) {
+              char.tags.push(tag);
+            }
+          });
+          
+          // Update in favorites if present
+          const favChar = favorites.find(f => f.name === name);
+          if (favChar) {
+            if (!favChar.tags) {
+              favChar.tags = [];
+            }
+            batchTags.forEach(tag => {
+              if (!favChar.tags.includes(tag)) {
+                favChar.tags.push(tag);
+              }
+            });
+          }
+        }
+      });
+      
+      save();
+      renderCharacters();
+      renderFavorites();
+      closeBatchTagPopup();
+      
+      showToast(`Added ${batchTags.length} tag${batchTags.length !== 1 ? 's' : ''} to ${selectedCharacters.length} character${selectedCharacters.length !== 1 ? 's' : ''}`);
+    }
+
+    function addSelectedToFavorites() {
+      let added = 0;
+      selectedCharacters.forEach(name => {
+        if (!isFavorite(name)) {
+          toggleFavorite(name, true);
+          added++;
+        }
+      });
+      deselectAll();
+      
+      if (added > 0) {
+        showToast(`Added ${added} character${added !== 1 ? 's' : ''} to favorites`);
+      }
+    }
+
+    // Character detail popup functions
+    function openDetailPopup(character) {
+      currentCharacter = { ...character }; // Create a copy to work with
+      
+      document.getElementById('detail-name').textContent = character.name;
+      document.getElementById('detail-name-input').value = character.name;
+      document.getElementById('detail-avatar').src = character.avatar;
+      document.getElementById('detail-favorite').checked = isFavorite(character.name);
+      
+      // Render tags
+      renderDetailTags();
+      
+      showPopup(document.getElementById('detail-popup'));
+
+      // Setup avatar upload handler
+      document.getElementById('detail-avatar-upload').onchange = function(e) {
+        if (e.target.files && e.target.files[0]) {
+          uploadAvatar(character.name, e.target.files[0]);
+        }
+      };
+      
+      // Remove old listener if exists and add new one
+      const tagInput = document.getElementById('detail-tag-input');
+      if (detailTagListener) {
+        tagInput.removeEventListener('keydown', detailTagListener);
+      }
+      
+      detailTagListener = function(e) {
+        if (e.key === 'Enter') {
+          addTagToDetail();
+        }
+      };
+      
+      tagInput.addEventListener('keydown', detailTagListener);
+    }
+
+    function closeDetailPopup() {
+      closePopup('detail-popup');
+      currentCharacter = null;
+      
+      // Clean up event listener
+      const tagInput = document.getElementById('detail-tag-input');
+      if (detailTagListener) {
+        tagInput.removeEventListener('keydown', detailTagListener);
+        detailTagListener = null;
+      }
+    }
+
+    function saveCharacterDetails() {
+      if (!currentCharacter) return;
+      
+      const oldName = currentCharacter.name;
+      const newName = document.getElementById('detail-name-input').value.trim();
+      const isFav = document.getElementById('detail-favorite').checked;
+      
+      // Create updated character object
+      const updatedChar = {
+        ...currentCharacter,
+        name: newName,
+      };
+      
+      // Update character
+      updateCharacter(oldName, updatedChar);
+      
+      // Update favorite status
+      if (isFav && !isFavorite(newName)) {
+        toggleFavorite(newName, true);
+      } else if (!isFav && isFavorite(newName)) {
+        toggleFavorite(newName, false);
+      }
+      
+      closeDetailPopup();
+    }
+
+    // UI helper functions
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast' + (isError ? ' error' : '');
+      
+      setTimeout(() => {
+        toast.classList.add('active');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.remove('active');
+      }, 3000);
+    }
+
+    function showPopup(popup) {
+      activePopup = popup;
+      document.getElementById('overlay').style.display = 'block';
+      popup.style.display = 'block';
+      
+      setTimeout(() => {
+        document.getElementById('overlay').classList.add('active');
+        popup.classList.add('active');
+      }, 10);
+    }
+
+    function closePopup(popupId) {
+      const popup = document.getElementById(popupId);
+      popup.classList.remove('active');
+      document.getElementById('overlay').classList.remove('active');
+      
+      setTimeout(() => {
+        popup.style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
+        activePopup = null;
+      }, 300);
+    }
+
+    // Setup overlay click to close popups
+    document.getElementById('overlay').addEventListener('click', () => {
+      if (activePopup) {
+        activePopup.classList.remove('active');
+        document.getElementById('overlay').classList.remove('active');
+        
+        setTimeout(() => {
+          activePopup.style.display = 'none';
+          document.getElementById('overlay').style.display = 'none';
+          activePopup = null;
+        }, 300);
+      }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Escape key to close popups
+      if (e.key === 'Escape') {
+        if (activePopup) {
+          const popupId = activePopup.id;
+          closePopup(popupId);
+        } else if (document.getElementById('settings-popup').style.display === 'block') {
+          toggleSettingsPopup();
+        }
+      }
+      
+      // Ctrl/Cmd+A to select all in selection mode
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a' && selectionMode) {
+        e.preventDefault();
+        selectAll();
+      }
+      
+      // Ctrl/Cmd+1-9 for profile switching
+      if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '9') {
+        e.preventDefault();
+        const profileIndex = parseInt(e.key) - 1;
+        const sortedProfiles = Object.values(profiles).sort((a, b) => {
+          if (a.id === 'default') return -1;
+          if (b.id === 'default') return 1;
+          return a.name.localeCompare(b.name);
+        });
+        
+        if (profileIndex < sortedProfiles.length) {
+          switchProfile(sortedProfiles[profileIndex].id);
+        }
+      }
+      
+      // Ctrl/Cmd+P to open profile manager
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        openProfileManager();
+      }
+    });
+
+    // Setup focus handling for search input
+    document.getElementById('search-input').addEventListener('focus', function() {
+      if (this.value.trim()) {
+        document.getElementById('search-results').style.display = 'block';
+      }
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.search-container')) {
+        document.getElementById('search-results').style.display = 'none';
+      }
+      
+      // Close settings popup when clicking elsewhere
+      if (!e.target.closest('#settings-popup') && !e.target.closest('.settings-menu')) {
+        const popup = document.getElementById('settings-popup');
+        if (popup.style.display === 'block') {
+          popup.classList.remove('active');
+          setTimeout(() => {
+            popup.style.display = 'none';
+          }, 200);
+        }
+      }
+    });
+
+    // Setup batch tag input for enter key
+    document.getElementById('batch-tag-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        addBatchTag();
+      }
+    });
+
+    // Initialize
+    
+    // Load data and initialize
+    loadData();
+    initSettings();
+    renderCharacters();
+    renderFavorites();
+    updateStats();
+    
+    // Initialize regex button state
+    if (useRegexSearch) {
+      const btn = document.getElementById('regex-btn');
+      btn.classList.add('active', 'btn-accent');
+      btn.classList.remove('btn-gray');
+    }
+    
+    // Start auto-backup
+    startAutoBackup();
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+      if (autoBackupInterval) {
+        clearInterval(autoBackupInterval);
+      }
+      createBackup();
+    });
+  </script>
+</body>
+</html>
