@@ -1,6 +1,6 @@
-# F-List Character Manager
+# F-Grid Character Select
 
-A web-based tool for managing and organizing F-List character rosters. Perfect for keeping track of your own characters and friends' rosters.
+A web-based tool for managing and organizing F-List character rosters. Perfect for keeping track your own (or friends!) roleplay profiles.
 
 ## Features
 
@@ -43,7 +43,7 @@ A web-based tool for managing and organizing F-List character rosters. Perfect f
 ## Usage
 
 ### Online Version
-Simply visit: [YOUR-GITHUB-USERNAME.github.io/flist-character-manager](https://YOUR-GITHUB-USERNAME.github.io/flist-character-manager)
+Simply visit: [YOUR-GITHUB-USERNAME.github.io/F-Grid-Character-Select](https://YOUR-GITHUB-USERNAME.github.io/F-Grid-Character-Select)
 
 ### Local Version
 1. Download `index.html`
