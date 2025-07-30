@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Character Select</title>
+  <title>F-Grid Character Select</title>
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="favicon-48x48.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -155,6 +158,34 @@
     
     .popup.active {
       transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    
+    #detail-popup .group:hover .group-hover\:opacity-100 {
+      opacity: 1;
+    }
+    
+    #detail-popup .group {
+      position: relative;
+      cursor: pointer;
+    }
+    
+    #detail-popup .avatar-overlay {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #detail-popup .group:hover .avatar-overlay {
       opacity: 1;
     }
     
@@ -353,6 +384,10 @@
       box-shadow: 0 0 0 2px var(--accent-color);
     }
     
+    .search-container input.regex-error {
+      box-shadow: 0 0 0 2px #ef4444 !important;
+    }
+    
     .search-clear-btn {
       background: var(--button-bg);
       border: none;
@@ -540,6 +575,13 @@
       flex-wrap: wrap;
     }
     
+    #detail-tags-container:empty::before {
+      content: "No tags added yet";
+      opacity: 0.5;
+      font-size: 0.875rem;
+      font-style: italic;
+    }
+    
     .checkbox-container {
       width: 20px;
       height: 20px;
@@ -622,7 +664,7 @@
       border-radius: 5px;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
       z-index: 100;
-      max-height: 300px;
+      max-height: min(300px, calc(100vh - 100px));
       overflow-y: auto;
       display: none;
       color: var(--text-color);
@@ -653,6 +695,65 @@
     
     .search-tag:hover {
       background-color: var(--button-bg);
+    }
+    
+    .search-history {
+      padding: 0;
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .search-history-item {
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .search-history-item:hover {
+      background-color: var(--secondary-bg);
+    }
+    
+    .search-history-item .remove-history {
+      opacity: 0;
+      transition: opacity 0.2s;
+      font-size: 0.7rem;
+      color: var(--text-color);
+      padding: 2px 6px;
+    }
+    
+    .search-history-item:hover .remove-history {
+      opacity: 0.6;
+    }
+    
+    .search-history-item .remove-history:hover {
+      opacity: 1;
+      color: #ef4444;
+    }
+    
+    .regex-indicator {
+      position: absolute;
+      right: 65px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 3px;
+      display: none;
+    }
+    
+    .regex-indicator.valid {
+      display: block;
+      background: #22c55e;
+      color: white;
+    }
+    
+    .regex-indicator.invalid {
+      display: block;
+      background: #ef4444;
+      color: white;
     }
     
     .theme-preview {
@@ -862,6 +963,272 @@
       color: var(--text-color);
       opacity: 0.5;
     }
+    
+    .duplicate-warning {
+      background: #fbbf24;
+      color: #78350f;
+      padding: 8px 12px;
+      border-radius: 5px;
+      margin-bottom: 12px;
+      font-size: 0.875rem;
+    }
+    
+    .duplicate-list {
+      max-height: 150px;
+      overflow-y: auto;
+      background: var(--secondary-bg);
+      border-radius: 5px;
+      padding: 8px;
+      margin: 8px 0;
+      font-size: 0.85rem;
+    }
+    
+    .duplicate-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .duplicate-option input[type="radio"] {
+      cursor: pointer;
+    }
+    
+    .help-popup code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.875rem;
+    }
+    
+    .help-popup h3 {
+      margin-top: 0;
+    }
+    
+    .help-popup h4 {
+      color: var(--text-color);
+      opacity: 0.9;
+    }
+    
+    .space-y-1 > * + * {
+      margin-top: 0.25rem;
+    }
+    
+    .space-y-2 > * + * {
+      margin-top: 0.5rem;
+    }
+    
+    .min-h-\[32px\] {
+      min-height: 32px;
+    }
+    
+    .leading-none {
+      line-height: 1;
+    }
+    
+    .border-b {
+      border-bottom-width: 1px;
+    }
+    
+    .border-t {
+      border-top-width: 1px;
+    }
+    
+    .pb-3 {
+      padding-bottom: 0.75rem;
+    }
+    
+    .pt-3 {
+      padding-top: 0.75rem;
+    }
+    
+    .mt-4 {
+      margin-top: 1rem;
+    }
+    
+    .opacity-80 {
+      opacity: 0.8;
+    }
+    
+    .opacity-70 {
+      opacity: 0.7;
+    }
+    
+    #detail-character-link {
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+    
+    .border {
+      border-width: 1px;
+    }
+    
+    .border-2 {
+      border-width: 2px;
+    }
+    
+    .p-4 {
+      padding: 1rem;
+    }
+    
+    .p-3 {
+      padding: 0.75rem;
+    }
+    
+    .rounded-lg {
+      border-radius: 0.5rem;
+    }
+    
+    .w-32 {
+      width: 8rem;
+    }
+    
+    .h-32 {
+      height: 8rem;
+    }
+    
+    .w-4 {
+      width: 1rem;
+    }
+    
+    .h-4 {
+      height: 1rem;
+    }
+    
+    .mb-1\.5 {
+      margin-bottom: 0.375rem;
+    }
+    
+    .mb-3 {
+      margin-bottom: 0.75rem;
+    }
+    
+    .mb-4 {
+      margin-bottom: 1rem;
+    }
+    
+    .mr-3 {
+      margin-right: 0.75rem;
+    }
+    
+    .px-5 {
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
+    
+    .px-4 {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    .py-2 {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    
+    .flex-shrink-0 {
+      flex-shrink: 0;
+    }
+    
+    .flex-grow {
+      flex-grow: 1;
+    }
+    
+    .font-semibold {
+      font-weight: 600;
+    }
+    
+    .font-medium {
+      font-weight: 500;
+    }
+    
+    .text-2xl {
+      font-size: 1.5rem;
+      line-height: 2rem;
+    }
+    
+    .text-xs {
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+    
+    .text-lg {
+      font-size: 1.125rem;
+      line-height: 1.75rem;
+    }
+    
+    .mr-2 {
+      margin-right: 0.5rem;
+    }
+    
+    .mt-2 {
+      margin-top: 0.5rem;
+    }
+    
+    .absolute {
+      position: absolute;
+    }
+    
+    .relative {
+      position: relative;
+    }
+    
+    .inset-0 {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    }
+    
+    .bg-black {
+      background-color: rgb(0 0 0);
+    }
+    
+    .bg-opacity-50 {
+      background-color: rgb(0 0 0 / 0.5);
+    }
+    
+    .text-white {
+      color: rgb(255 255 255);
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .object-cover {
+      object-fit: cover;
+    }
+    
+    .w-full {
+      width: 100%;
+    }
+    
+    .gap-4 {
+      gap: 1rem;
+    }
+    
+    .gap-2 {
+      gap: 0.5rem;
+    }
+    
+    .justify-between {
+      justify-content: space-between;
+    }
+    
+    .items-center {
+      align-items: center;
+    }
+    
+    .mb-2 {
+      margin-bottom: 0.5rem;
+    }
+    
+    .text-center {
+      text-align: center;
+    }
+    
+    .cursor-pointer {
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -910,6 +1277,9 @@
     <div class="menu-separator"></div>
     
     <div class="menu-title">Display Settings</div>
+    <div class="menu-item" onclick="openHelpWindow()">
+      <span>Help & Shortcuts</span>
+    </div>
     <div class="menu-item" onclick="toggleListView()">
       <span>Toggle Grid/List View</span>
     </div>
@@ -935,12 +1305,32 @@
   </div>
 
   <!-- Import Dialog -->
-  <div id="import-dialog" class="popup" style="width: 400px;">
+  <div id="import-dialog" class="popup" style="width: 500px;">
     <h2 class="text-xl font-bold text-center mb-4">Import Character Data</h2>
     <p class="mb-4" style="opacity: 0.8;">Paste your exported JSON data below:</p>
     <textarea id="import-json" class="w-full h-32 p-2 rounded mb-4" placeholder='{"characters":[...], "favorites":[...]}' spellcheck="false" style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); font-family: monospace; font-size: 0.875rem;"></textarea>
+    
+    <div id="duplicate-warning" style="display: none;">
+      <div class="duplicate-warning">
+        <strong>⚠️ Duplicates detected!</strong> The following characters already exist:
+        <div class="duplicate-list" id="duplicate-list"></div>
+        <div class="duplicate-option">
+          <input type="radio" name="duplicate-action" value="skip" id="dup-skip" checked>
+          <label for="dup-skip">Skip duplicates</label>
+        </div>
+        <div class="duplicate-option">
+          <input type="radio" name="duplicate-action" value="merge" id="dup-merge">
+          <label for="dup-merge">Merge tags (keep existing + add new tags)</label>
+        </div>
+        <div class="duplicate-option">
+          <input type="radio" name="duplicate-action" value="replace" id="dup-replace">
+          <label for="dup-replace">Replace with imported data</label>
+        </div>
+      </div>
+    </div>
+    
     <div class="flex justify-between">
-      <div class="text-sm" style="opacity: 0.6;">This will overwrite your current data.</div>
+      <div class="text-sm" style="opacity: 0.6;">This will modify your current data.</div>
       <div class="flex gap-2">
         <button onclick="closeImportDialog()" class="btn btn-gray px-4 py-2">Cancel</button>
         <button onclick="importData()" class="btn btn-accent px-4 py-2">Import</button>
@@ -949,7 +1339,7 @@
   </div>
 
   <!-- Batch Add Popup -->
-  <div id="batch-popup" class="popup" style="width: 400px;">
+  <div id="batch-popup" class="popup" style="width: 500px;">
     <h2 class="text-xl font-bold text-center mb-4">Batch Add Characters</h2>
     <p class="text-sm mb-2" style="opacity: 0.8;">Enter character names separated by commas, semicolons, tabs, or new lines:</p>
     <textarea id="batch-add-input" placeholder="Examples:&#10;Alice, Bob, Charlie&#10;David&#10;Eve&#10;Frank, Grace" class="w-full h-32 p-2 rounded mb-2" style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid var(--border-color); resize: vertical; font-family: inherit;" onkeydown="if((event.ctrlKey || event.metaKey) && event.key === 'Enter') { batchAddCharacters(); }" oninput="updateBatchCount()"></textarea>
@@ -957,6 +1347,14 @@
       <p class="text-xs" style="opacity: 0.6;">Tip: Paste from spreadsheets or lists. Press Ctrl/Cmd+Enter to add.</p>
       <p class="text-sm" style="opacity: 0.8;"><span id="batch-count">0</span> names detected</p>
     </div>
+    
+    <div id="batch-duplicate-warning" style="display: none;">
+      <div class="duplicate-warning">
+        <strong>⚠️ Duplicates detected!</strong> <span id="batch-duplicate-count"></span> names already exist.
+        <div class="duplicate-list" id="batch-duplicate-list"></div>
+      </div>
+    </div>
+    
     <div class="flex justify-end gap-2">
       <button onclick="closeBatchPopup()" class="btn btn-gray px-4 py-2">Cancel</button>
       <button onclick="batchAddCharacters()" class="btn btn-accent px-4 py-2">Add Characters</button>
@@ -964,41 +1362,70 @@
   </div>
 
   <!-- Character Detail Popup -->
-  <div id="detail-popup" class="popup" style="width: 500px;">
-    <div class="flex justify-between items-start mb-4">
-      <h2 class="text-xl font-bold" id="detail-name">Character Name</h2>
-      <button onclick="closeDetailPopup()" class="text-opacity-60 hover:text-opacity-100">✕</button>
+  <div id="detail-popup" class="popup" style="width: 450px;">
+    <div class="flex justify-between items-center mb-4 pb-3 border-b" style="border-color: var(--border-color);">
+      <h2 class="text-xl font-bold">Character Details</h2>
+      <button onclick="closeDetailPopup()" class="text-2xl leading-none opacity-60 hover:opacity-100 transition-opacity" style="margin-top: -5px;">×</button>
     </div>
+    
     <div class="flex gap-4 mb-4">
-      <div class="w-1/3">
-        <img id="detail-avatar" src="" class="w-full rounded-md object-cover mb-2">
-        <input type="file" accept="image/*" id="detail-avatar-upload" class="text-sm w-full">
-      </div>
-      <div class="w-2/3">
-        <div class="mb-3">
-          <label class="block text-sm font-bold mb-1">Character Name</label>
-          <input id="detail-name-input" type="text" class="w-full p-2 rounded bg-gray-700 text-white">
-        </div>
-        <div class="mb-3">
-          <label class="block text-sm font-bold mb-1">Tags</label>
-          <div id="detail-tags-container" class="tag-container mb-2"></div>
-          <div class="flex gap-2">
-            <input id="detail-tag-input" type="text" placeholder="Add a tag" class="p-2 rounded bg-gray-700 text-white flex-grow">
-            <button onclick="addTagToDetail()" class="btn btn-accent px-3">Add</button>
+      <!-- Avatar Section -->
+      <div class="flex-shrink-0">
+        <div class="relative group" onclick="document.getElementById('detail-avatar-upload').click()">
+          <img id="detail-avatar" src="" class="w-32 h-32 rounded-lg object-cover border-2" style="border-color: var(--border-color);">
+          <div class="avatar-overlay">
+            <span class="text-white text-xs">Click to change</span>
           </div>
         </div>
-        <div class="flex items-center">
-          <input id="detail-favorite" type="checkbox" class="mr-2">
-          <label>Add to Favorites</label>
+        <input type="file" accept="image/*" id="detail-avatar-upload" class="hidden">
+        <button onclick="document.getElementById('detail-avatar-upload').click()" class="btn btn-gray btn-sm w-full mt-2">
+          Change Avatar
+        </button>
+      </div>
+      
+      <!-- Details Section -->
+      <div class="flex-grow">
+        <div class="mb-4">
+          <label class="block text-sm font-semibold mb-1.5 opacity-80">Character Name</label>
+          <input id="detail-name-input" type="text" class="w-full p-2 rounded input-field" style="background: var(--secondary-bg); color: var(--text-color);">
+        </div>
+        
+        <div class="flex items-center p-3 rounded-lg" style="background: var(--secondary-bg);">
+          <input id="detail-favorite" type="checkbox" class="mr-3 w-4 h-4 cursor-pointer">
+          <label for="detail-favorite" class="cursor-pointer flex items-center">
+            <span class="text-lg mr-2">⭐</span>
+            <span class="font-medium">Add to Favorites</span>
+          </label>
         </div>
       </div>
     </div>
-    <div class="flex justify-between">
-      <button onclick="deleteCharacter()" class="btn btn-gray px-4 py-2" style="background-color: #dc2626;">Delete Character</button>
+    
+    <!-- Tags Section -->
+    <div class="mb-4 p-4 rounded-lg border" style="background: var(--primary-bg); border-color: var(--border-color);">
+      <label class="block text-sm font-semibold mb-2 opacity-80">Tags</label>
+      <div id="detail-tags-container" class="tag-container mb-3 min-h-[32px]"></div>
       <div class="flex gap-2">
-        <button onclick="closeDetailPopup()" class="btn btn-gray px-4 py-2">Cancel</button>
-        <button onclick="saveCharacterDetails()" class="btn btn-accent px-4 py-2">Save</button>
+        <input id="detail-tag-input" type="text" placeholder="Add a tag and press Enter" class="flex-grow p-2 rounded input-field text-sm" style="background: var(--secondary-bg); color: var(--text-color);">
+        <button onclick="addTagToDetail()" class="btn btn-accent px-4">Add Tag</button>
       </div>
+    </div>
+    
+    <!-- Actions Section -->
+    <div class="flex justify-between items-center pt-3 border-t" style="border-color: var(--border-color);">
+      <button onclick="deleteCharacter()" class="btn px-4 py-2 text-white" style="background-color: #dc2626;">
+        🗑️ Delete Character
+      </button>
+      <div class="flex gap-2">
+        <button onclick="closeDetailPopup()" class="btn btn-gray px-5 py-2">Cancel</button>
+        <button onclick="saveCharacterDetails()" class="btn btn-accent px-5 py-2 font-semibold">Save Changes</button>
+      </div>
+    </div>
+    
+    <!-- Character Link -->
+    <div class="text-center mt-4 pt-3 border-t" style="border-color: var(--border-color);">
+      <a href="#" id="detail-character-link" target="_blank" class="text-sm opacity-70 hover:opacity-100 transition-opacity" style="color: var(--accent-color);">
+        View on F-List →
+      </a>
     </div>
   </div>
 
@@ -1039,6 +1466,7 @@
       <div class="text-sm" style="opacity: 0.7;">
         <p class="mb-2">Hotkeys:</p>
         <p>• Ctrl/Cmd + 1-9: Quick switch to profile</p>
+        <p>• Ctrl/Cmd + Left/Right: Navigate between profiles</p>
         <p>• Ctrl/Cmd + P: Open profile manager</p>
         <p>• Each profile maintains its own characters, favorites, and settings</p>
       </div>
@@ -1049,12 +1477,99 @@
     </div>
   </div>
 
+  <!-- Help Window -->
+  <div id="help-popup" class="popup" style="width: 600px; max-height: 80vh; overflow-y: auto;">
+    <div class="flex justify-between items-start mb-4">
+      <h2 class="text-xl font-bold">Help & Keyboard Shortcuts</h2>
+      <button onclick="closeHelpWindow()" class="text-opacity-60 hover:text-opacity-100">✕</button>
+    </div>
+    
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold mb-3" style="color: var(--accent-color);">Keyboard Shortcuts</h3>
+      
+      <div class="mb-4">
+        <h4 class="font-semibold mb-2">General</h4>
+        <div class="space-y-1 text-sm" style="opacity: 0.9;">
+          <div><code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Ctrl/Cmd + H</code> or <code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Ctrl/Cmd + /</code> - Show this help window</div>
+          <div><code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Esc</code> - Close any open popup</div>
+          <div><code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Enter</code> - Add character (when in input field)</div>
+        </div>
+      </div>
+      
+      <div class="mb-4">
+        <h4 class="font-semibold mb-2">Profile Management</h4>
+        <div class="space-y-1 text-sm" style="opacity: 0.9;">
+          <div><code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Ctrl/Cmd + P</code> - Open profile manager</div>
+          <div><code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Ctrl/Cmd + 1-9</code> - Quick switch to profile</div>
+          <div><code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Ctrl/Cmd + ←/→</code> - Navigate between profiles</div>
+        </div>
+      </div>
+      
+      <div class="mb-4">
+        <h4 class="font-semibold mb-2">Selection Mode</h4>
+        <div class="space-y-1 text-sm" style="opacity: 0.9;">
+          <div><code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Ctrl/Cmd + A</code> - Select all visible characters</div>
+          <div><code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Right Click</code> - Toggle selection on character</div>
+        </div>
+      </div>
+      
+      <div class="mb-4">
+        <h4 class="font-semibold mb-2">Batch Operations</h4>
+        <div class="space-y-1 text-sm" style="opacity: 0.9;">
+          <div><code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 3px;">Ctrl/Cmd + Enter</code> - Submit batch add (in batch dialog)</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold mb-3" style="color: var(--accent-color);">Mouse Actions</h3>
+      <div class="space-y-1 text-sm" style="opacity: 0.9;">
+        <div><strong>Left Click</strong> - Open character page / Select in selection mode</div>
+        <div><strong>Middle Click</strong> - Open character in background tab</div>
+        <div><strong>Right Click</strong> - Open character details / Toggle selection</div>
+        <div><strong>Drag & Drop</strong> - Add character to favorites</div>
+        <div><strong>Click Checkbox</strong> - Enable selection mode and select character</div>
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold mb-3" style="color: var(--accent-color);">Features</h3>
+      <div class="space-y-2 text-sm" style="opacity: 0.9;">
+        <div>• <strong>Multiple Profiles</strong> - Manage different character sets (e.g., your characters vs friends')</div>
+        <div>• <strong>Search</strong> - Normal or regex search with history</div>
+        <div>• <strong>Tags</strong> - Organize characters with custom tags</div>
+        <div>• <strong>Batch Import</strong> - Add multiple characters at once (comma/newline/tab separated)</div>
+        <div>• <strong>Auto-backup</strong> - Data is backed up every 5 minutes</div>
+        <div>• <strong>Export/Import</strong> - Save and restore all your data as JSON</div>
+        <div>• <strong>Themes</strong> - Choose between Default (blue), Dark (purple), or Light (orange)</div>
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold mb-3" style="color: var(--accent-color);">Tips</h3>
+      <div class="space-y-2 text-sm" style="opacity: 0.9;">
+        <div>• Character avatars are automatically fetched from F-List</div>
+        <div>• You can upload custom avatars by right-clicking a character</div>
+        <div>• Use regex search for advanced pattern matching</div>
+        <div>• The app works offline - all data is stored locally</div>
+        <div>• Search history shows your last 10 searches</div>
+      </div>
+    </div>
+    
+    <div class="text-center pt-4 border-t" style="border-color: var(--border-color);">
+      <p class="text-sm mb-2" style="opacity: 0.7;">F-Grid Character Select</p>
+      <a href="https://github.com/star-johansen/F-Grid-Character-Select" target="_blank" class="btn btn-accent px-4 py-2">
+        View on GitHub
+      </a>
+    </div>
+  </div>
+
   <!-- Header -->
   <header class="header">
     <!-- Left side - Title with settings -->
     <div class="title-container">
       <div class="settings-menu" onclick="toggleSettingsPopup()">⚙️</div>
-      <h1 class="text-2xl font-bold">Character Select</h1>
+      <h1 class="text-2xl font-bold">F-Grid Character Select</h1>
       <div class="profile-selector">
         <select id="profile-select" onchange="switchProfile(this.value)" class="profile-dropdown">
           <option value="default">Default</option>
@@ -1066,11 +1581,13 @@
     <!-- Center - Search Bar -->
     <div class="search-container">
       <button onclick="toggleRegexSearch()" id="regex-btn" class="btn btn-gray" title="Toggle regex search" style="font-family: monospace; font-weight: bold;">.*</button>
-      <input id="search-input" type="text" placeholder="Search characters..." onkeyup="searchCharacters()" class="input-field">
+      <input id="search-input" type="text" placeholder="Search characters..." onkeyup="searchCharacters()" onfocus="showSearchHistory()" class="input-field">
+      <div class="regex-indicator" id="regex-indicator"></div>
       <button onclick="clearSearch()" class="search-clear-btn">Clear</button>
       <div class="search-results" id="search-results">
         <div class="search-count" id="search-count"></div>
         <div class="search-tags" id="search-tags"></div>
+        <div class="search-history" id="search-history"></div>
       </div>
     </div>
     
@@ -1139,6 +1656,7 @@
     let currentPage = 0;
     const ITEMS_PER_PAGE = 100;
     let autoBackupInterval = null;
+    let searchHistory = [];
     
     // Load data from localStorage after variables are initialized
     function loadData() {
@@ -1171,6 +1689,9 @@
         
         // Load global settings
         settings = JSON.parse(localStorage.getItem('settings') || '{"theme": "default-theme", "gridView": true}');
+        
+        // Load search history
+        searchHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
         
         // Update profile selector
         updateProfileSelector();
@@ -1497,6 +2018,16 @@
       closePopup('profile-manager-popup');
     }
     
+    // Help window functions
+    function openHelpWindow() {
+      showPopup(document.getElementById('help-popup'));
+      toggleSettingsPopup(); // Close settings menu
+    }
+    
+    function closeHelpWindow() {
+      closePopup('help-popup');
+    }
+    
     // Theme functions
     function showThemeMenu() {
       cancelThemeMenuHide();
@@ -1644,6 +2175,14 @@
         } else {
           // Clicked elsewhere on card
           handleCardClick(e, character.name);
+        }
+      });
+      
+      // Middle mouse click to open in background
+      card.addEventListener('auxclick', (e) => {
+        if (e.button === 1) { // Middle mouse button
+          e.preventDefault();
+          window.open('https://www.f-list.net/c/' + character.name, '_blank');
         }
       });
       
@@ -1860,7 +2399,6 @@
             );
           } catch (error) {
             // Invalid regex, fall back to normal search
-            showToast('Invalid regex pattern', true);
             listToRender = listToRender.filter(c => 
               c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
               (c.tags && c.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
@@ -2029,10 +2567,13 @@
       const input = document.getElementById('new-character-name');
       const name = input.value.trim();
       if (!name) return;
-      if (characters.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+      
+      // Check for duplicates
+      if (isDuplicateCharacter(name)) {
         showToast('Character already exists!', true);
         return;
       }
+      
       const newChar = { 
         name, 
         avatar: 'https://static.f-list.net/images/avatar/' + encodeURIComponent(name.toLowerCase()) + '.png', 
@@ -2049,12 +2590,17 @@
       updateStats();
       showToast(`Added character: ${name}`);
     }
+    
+    function isDuplicateCharacter(name) {
+      return characters.some(c => c.name.toLowerCase() === name.toLowerCase());
+    }
 
     function openBatchPopup() {
       const popup = document.getElementById('batch-popup');
       showPopup(popup);
-      // Reset count
+      // Reset UI
       document.getElementById('batch-count').textContent = '0';
+      document.getElementById('batch-duplicate-warning').style.display = 'none';
       // Focus the textarea
       setTimeout(() => {
         document.getElementById('batch-add-input').focus();
@@ -2065,6 +2611,7 @@
       closePopup('batch-popup');
       document.getElementById('batch-add-input').value = '';
       document.getElementById('batch-count').textContent = '0';
+      document.getElementById('batch-duplicate-warning').style.display = 'none';
     }
     
     function updateBatchCount() {
@@ -2073,6 +2620,7 @@
       
       if (!inputValue) {
         document.getElementById('batch-count').textContent = '0';
+        document.getElementById('batch-duplicate-warning').style.display = 'none';
         return;
       }
       
@@ -2085,6 +2633,18 @@
       
       const uniqueNames = [...new Set(names)];
       document.getElementById('batch-count').textContent = uniqueNames.length;
+      
+      // Check for duplicates
+      const duplicates = uniqueNames.filter(name => isDuplicateCharacter(name));
+      
+      if (duplicates.length > 0) {
+        document.getElementById('batch-duplicate-warning').style.display = 'block';
+        document.getElementById('batch-duplicate-count').textContent = duplicates.length;
+        document.getElementById('batch-duplicate-list').textContent = duplicates.slice(0, 10).join(', ') + 
+          (duplicates.length > 10 ? `, and ${duplicates.length - 10} more` : '');
+      } else {
+        document.getElementById('batch-duplicate-warning').style.display = 'none';
+      }
     }
 
     function batchAddCharacters() {
@@ -2112,7 +2672,7 @@
       const skippedNames = [];
       
       uniqueNames.forEach(name => {
-        if (!characters.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        if (!isDuplicateCharacter(name)) {
           const newChar = { 
             name, 
             avatar: 'https://static.f-list.net/images/avatar/' + encodeURIComponent(name.toLowerCase()) + '.png', 
@@ -2304,11 +2864,13 @@
     function openImportDialog() {
       toggleSettingsPopup();
       const popup = document.getElementById('import-dialog');
+      document.getElementById('duplicate-warning').style.display = 'none';
       showPopup(popup);
     }
 
     function closeImportDialog() {
       closePopup('import-dialog');
+      document.getElementById('duplicate-warning').style.display = 'none';
     }
 
     function validateImportData(data) {
@@ -2389,11 +2951,50 @@
         // Create backup before importing
         createBackup();
         
+        const duplicateAction = document.querySelector('input[name="duplicate-action"]:checked')?.value || 'skip';
+        
         // Check if it's the new format (with profiles)
         if (data.version === 2 || data.profiles) {
-          // Import profiles
-          profiles = data.profiles;
-          currentProfileId = data.currentProfileId || 'default';
+          // Handle profile import with duplicate checking
+          Object.entries(data.profiles).forEach(([profileId, profile]) => {
+            if (profiles[profileId]) {
+              // Profile exists, handle characters based on duplicate action
+              const existingChars = new Set(profiles[profileId].characters.map(c => c.name.toLowerCase()));
+              
+              profile.characters.forEach(char => {
+                const charLower = char.name.toLowerCase();
+                const existingIndex = profiles[profileId].characters.findIndex(c => c.name.toLowerCase() === charLower);
+                
+                if (existingIndex !== -1) {
+                  // Handle duplicate based on action
+                  if (duplicateAction === 'replace') {
+                    profiles[profileId].characters[existingIndex] = char;
+                  } else if (duplicateAction === 'merge') {
+                    // Merge tags
+                    const existing = profiles[profileId].characters[existingIndex];
+                    const allTags = new Set([...(existing.tags || []), ...(char.tags || [])]);
+                    existing.tags = Array.from(allTags);
+                  }
+                  // 'skip' does nothing
+                } else {
+                  // New character
+                  profiles[profileId].characters.push(char);
+                }
+              });
+              
+              // Update favorites similarly
+              profile.favorites.forEach(fav => {
+                if (!profiles[profileId].favorites.some(f => f.name.toLowerCase() === fav.name.toLowerCase())) {
+                  profiles[profileId].favorites.push(fav);
+                }
+              });
+            } else {
+              // New profile
+              profiles[profileId] = profile;
+            }
+          });
+          
+          currentProfileId = data.currentProfileId || currentProfileId;
           
           // Ensure current profile exists
           if (!profiles[currentProfileId]) {
@@ -2403,11 +3004,41 @@
           // Load current profile data
           loadProfileData(currentProfileId);
         } else {
-          // Old format - import into current profile
-          characters = data.characters;
+          // Old format - check for duplicates first
+          const duplicates = data.characters.filter(char => isDuplicateCharacter(char.name));
+          
+          if (duplicates.length > 0 && duplicateAction !== 'skip') {
+            if (duplicateAction === 'replace') {
+              // Replace all duplicates
+              duplicates.forEach(newChar => {
+                const index = characters.findIndex(c => c.name.toLowerCase() === newChar.name.toLowerCase());
+                if (index !== -1) {
+                  characters[index] = newChar;
+                }
+              });
+            } else if (duplicateAction === 'merge') {
+              // Merge tags
+              duplicates.forEach(newChar => {
+                const existing = characters.find(c => c.name.toLowerCase() === newChar.name.toLowerCase());
+                if (existing && newChar.tags) {
+                  const allTags = new Set([...(existing.tags || []), ...(newChar.tags || [])]);
+                  existing.tags = Array.from(allTags);
+                }
+              });
+            }
+          }
+          
+          // Add non-duplicate characters
+          const newChars = data.characters.filter(char => !isDuplicateCharacter(char.name));
+          characters.push(...newChars);
           
           if (data.favorites && Array.isArray(data.favorites)) {
-            favorites = data.favorites;
+            // Add non-duplicate favorites
+            data.favorites.forEach(fav => {
+              if (!favorites.some(f => f.name.toLowerCase() === fav.name.toLowerCase())) {
+                favorites.push(fav);
+              }
+            });
           }
           
           // Save to current profile
@@ -2451,10 +3082,12 @@
         localStorage.removeItem('characters');
         localStorage.removeItem('favorites');
         localStorage.removeItem('settings');
+        localStorage.removeItem('searchHistory');
         
         // Reset to defaults
         initializeDefaultProfile();
         settings = { theme: 'default-theme', gridView: true };
+        searchHistory = [];
         
         save();
         saveSettings();
@@ -2475,8 +3108,19 @@
       const resultsEl = document.getElementById('search-results');
       if (searchQuery) {
         resultsEl.style.display = 'block';
+        
+        // Add to search history if it's a meaningful search
+        if (searchQuery.length >= 2) {
+          addToSearchHistory(searchQuery);
+        }
+        
+        // Validate regex if in regex mode
+        if (useRegexSearch) {
+          validateRegex(searchQuery);
+        }
       } else {
         resultsEl.style.display = 'none';
+        clearRegexIndicator();
       }
       
       renderCharacters();
@@ -2486,7 +3130,84 @@
       document.getElementById('search-input').value = '';
       searchQuery = '';
       document.getElementById('search-results').style.display = 'none';
+      clearRegexIndicator();
       renderCharacters();
+    }
+    
+    function validateRegex(pattern) {
+      const input = document.getElementById('search-input');
+      const indicator = document.getElementById('regex-indicator');
+      
+      try {
+        new RegExp(pattern);
+        input.classList.remove('regex-error');
+        indicator.textContent = '✓ Valid';
+        indicator.className = 'regex-indicator valid';
+      } catch (error) {
+        input.classList.add('regex-error');
+        indicator.textContent = '✗ Invalid';
+        indicator.className = 'regex-indicator invalid';
+      }
+    }
+    
+    function clearRegexIndicator() {
+      const input = document.getElementById('search-input');
+      const indicator = document.getElementById('regex-indicator');
+      input.classList.remove('regex-error');
+      indicator.className = 'regex-indicator';
+    }
+    
+    function addToSearchHistory(query) {
+      // Remove if already exists
+      searchHistory = searchHistory.filter(q => q !== query);
+      
+      // Add to beginning
+      searchHistory.unshift(query);
+      
+      // Keep only last 10
+      searchHistory = searchHistory.slice(0, 10);
+      
+      // Save
+      localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+    }
+    
+    function showSearchHistory() {
+      const resultsEl = document.getElementById('search-results');
+      const historyEl = document.getElementById('search-history');
+      
+      // Clear history element
+      historyEl.innerHTML = '';
+      
+      if (searchHistory.length > 0 && !searchQuery) {
+        const historyTitle = document.createElement('div');
+        historyTitle.className = 'search-count';
+        historyTitle.textContent = 'Recent searches:';
+        historyEl.appendChild(historyTitle);
+        
+        searchHistory.forEach((query, index) => {
+          const item = document.createElement('div');
+          item.className = 'search-history-item';
+          item.innerHTML = `
+            <span>${query}</span>
+            <span class="remove-history" onclick="removeFromHistory(${index})">×</span>
+          `;
+          item.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('remove-history')) {
+              document.getElementById('search-input').value = query;
+              searchCharacters();
+            }
+          });
+          historyEl.appendChild(item);
+        });
+        
+        resultsEl.style.display = 'block';
+      }
+    }
+    
+    function removeFromHistory(index) {
+      searchHistory.splice(index, 1);
+      localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+      showSearchHistory();
     }
 
     // Tag functions
@@ -2641,10 +3362,10 @@
     function openDetailPopup(character) {
       currentCharacter = { ...character }; // Create a copy to work with
       
-      document.getElementById('detail-name').textContent = character.name;
       document.getElementById('detail-name-input').value = character.name;
       document.getElementById('detail-avatar').src = character.avatar;
       document.getElementById('detail-favorite').checked = isFavorite(character.name);
+      document.getElementById('detail-character-link').href = 'https://www.f-list.net/c/' + character.name;
       
       // Render tags
       renderDetailTags();
@@ -2763,6 +3484,39 @@
       }
     });
     
+    // Check import data for duplicates
+    document.getElementById('import-json').addEventListener('input', function() {
+      try {
+        const data = JSON.parse(this.value);
+        let duplicates = [];
+        
+        if (data.version === 2 || data.profiles) {
+          // Check profiles for duplicates
+          Object.values(data.profiles).forEach(profile => {
+            profile.characters.forEach(char => {
+              if (profiles[currentProfileId] && profiles[currentProfileId].characters.some(c => c.name.toLowerCase() === char.name.toLowerCase())) {
+                duplicates.push(char.name);
+              }
+            });
+          });
+        } else if (data.characters) {
+          // Old format
+          duplicates = data.characters.filter(char => isDuplicateCharacter(char.name)).map(c => c.name);
+        }
+        
+        if (duplicates.length > 0) {
+          document.getElementById('duplicate-warning').style.display = 'block';
+          document.getElementById('duplicate-list').textContent = duplicates.slice(0, 10).join(', ') + 
+            (duplicates.length > 10 ? `, and ${duplicates.length - 10} more` : '');
+        } else {
+          document.getElementById('duplicate-warning').style.display = 'none';
+        }
+      } catch (e) {
+        // Invalid JSON, hide warning
+        document.getElementById('duplicate-warning').style.display = 'none';
+      }
+    });
+    
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       // Escape key to close popups
@@ -2773,6 +3527,12 @@
         } else if (document.getElementById('settings-popup').style.display === 'block') {
           toggleSettingsPopup();
         }
+      }
+      
+      // Ctrl/Cmd+H or Ctrl/Cmd+/ for help
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'h' || e.key === 'H' || e.key === '/')) {
+        e.preventDefault();
+        openHelpWindow();
       }
       
       // Ctrl/Cmd+A to select all in selection mode
@@ -2796,6 +3556,29 @@
         }
       }
       
+      // Ctrl/Cmd+Left/Right to navigate profiles
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        e.preventDefault();
+        const sortedProfiles = Object.values(profiles).sort((a, b) => {
+          if (a.id === 'default') return -1;
+          if (b.id === 'default') return 1;
+          return a.name.localeCompare(b.name);
+        });
+        
+        const currentIndex = sortedProfiles.findIndex(p => p.id === currentProfileId);
+        let newIndex;
+        
+        if (e.key === 'ArrowLeft') {
+          newIndex = currentIndex - 1;
+          if (newIndex < 0) return; // Don't loop around
+        } else {
+          newIndex = currentIndex + 1;
+          if (newIndex >= sortedProfiles.length) return; // Don't loop around
+        }
+        
+        switchProfile(sortedProfiles[newIndex].id);
+      }
+      
       // Ctrl/Cmd+P to open profile manager
       if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
         e.preventDefault();
@@ -2807,6 +3590,8 @@
     document.getElementById('search-input').addEventListener('focus', function() {
       if (this.value.trim()) {
         document.getElementById('search-results').style.display = 'block';
+      } else {
+        showSearchHistory();
       }
     });
 

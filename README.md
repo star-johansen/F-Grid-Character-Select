@@ -71,7 +71,7 @@ All data is stored locally in your browser's localStorage. Your data never leave
 ## Browser Support
 
 Works best in:
-- Chrome/Edge (recommended)
+- Chrome/Edge
 - Firefox
 - Safari
 
@@ -81,4 +81,4 @@ Feel free to submit issues or pull requests!
 
 ## License
 
-MIT License - See LICENSE file for details
+This project is licensed under the GNU General Public License v3.0 - See LICENSE file for details
